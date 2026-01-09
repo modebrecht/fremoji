@@ -87,7 +87,7 @@
 
         main {
             flex: 1;
-            padding: 16px 20px; /* Update: 20px Seitenabstand hinzugefügt */
+            padding: 16px 20px;
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -341,6 +341,22 @@
         .btn-next { background-color: var(--success-color); color: #000; display: none; }
         .btn-errors { background-color: var(--error-color); color: white; display: none; }
         .btn-delete { background-color: #d32f2f; color: white; margin-top: 20px; font-size: 0.8rem; padding: 8px 16px; }
+        
+        /* New buttons for error view */
+        .btn-mini-error { 
+            background-color: var(--error-color); 
+            color: white; 
+            border-radius: 4px; 
+            padding: 4px 8px; 
+            font-size: 0.8rem; 
+            margin-left: 10px; 
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-back {
+            background-color: var(--surface-hover);
+            color: var(--text-main);
+            border: 1px solid var(--primary-color);
+        }
 
         /* Toast */
         .toast-container {
@@ -389,11 +405,13 @@
         .result-row {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 12px 0;
             border-bottom: 1px solid #333;
         }
         .result-row:last-child { border-bottom: none; }
         .result-label { color: var(--text-muted); }
+        .result-right { display: flex; align-items: center; }
         .result-val { font-weight: bold; color: var(--accent-color); }
         .result-val.perfect { color: var(--success-color); }
 
@@ -847,21 +865,30 @@
                 const container = document.getElementById('game-container');
                 let html = `<div class="results-view"><h2>📊 Deine Resultate</h2>`;
                 
-                LEVELS.forEach(level => {
+                LEVELS.forEach((level, index) => {
                     const res = this.results[level.id];
                     let text = "Noch nicht gelöst";
                     let cssClass = "result-val";
+                    let errorButton = "";
                     
                     if (res) {
                         const percent = Math.round((res.correctFirstTry / res.total) * 100);
                         text = `${res.correctFirstTry} / ${res.total} richtig (${percent}%)`;
                         if (percent === 100) cssClass += " perfect";
+                        
+                        // Show Error Button if errors exist in saved result
+                        if (res.errors && res.errors.length > 0) {
+                            errorButton = `<button class="btn-mini-error" onclick="game.showSavedErrors(${index})">⚠️</button>`;
+                        }
                     }
 
                     html += `
                         <div class="result-row">
                             <span class="result-label">${level.name}</span>
-                            <span class="${cssClass}">${text}</span>
+                            <div class="result-right">
+                                <span class="${cssClass}">${text}</span>
+                                ${errorButton}
+                            </div>
                         </div>
                     `;
                 });
@@ -882,6 +909,35 @@
                 
                 document.getElementById('subtitle').textContent = "Übersicht der beim ersten Versuch gelösten Aufgaben.";
                 document.getElementById('level-select').value = "results";
+            },
+
+            // NEU: Zeigt gespeicherte Fehler für ein bestimmtes Level
+            showSavedErrors(levelIndex) {
+                const level = LEVELS[levelIndex];
+                const res = this.results[level.id];
+                if (!res || !res.errors) return;
+
+                const container = document.getElementById('game-container');
+                const errorItems = level.items.filter(item => res.errors.includes(item.id));
+                
+                let html = `<div class="view-container"><h2>⚠️ Fehler: ${level.name}</h2>`;
+                html += `<p>Diese Begriffe waren schwierig:</p><div class="error-grid">`;
+                
+                errorItems.forEach(item => {
+                    html += `
+                        <div class="error-card">
+                            <span class="error-emoji">${item.emoji}</span>
+                            <span class="error-text">${item.label || item.say || '???'}</span>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>
+                    <div style="text-align:center; margin-top:20px;">
+                        <button class="btn-back" onclick="game.renderResultsView()">Zurück zu Resultaten</button>
+                    </div>
+                </div>`;
+                container.innerHTML = html;
             },
 
             renderErrorView() {
@@ -1000,10 +1056,11 @@
                     }
                 });
                 
-                // Save Results
+                // Save Results AND currentErrors
                 this.results[level.id] = {
                     correctFirstTry: correctFirstTry,
-                    total: level.items.length
+                    total: level.items.length,
+                    errors: [...this.currentErrors] // Copy of errors
                 };
                 this.saveData();
 
@@ -1166,7 +1223,32 @@
                             if (isValid && this.dragEl.dataset.say) {
                                 activeSentence.textContent = this.dragEl.dataset.say + ' ✓';
                             } else {
-                                activeSentence.textContent = `${zoneLabel} ${itemLabel} ✕`;
+                                // Grammar Builder for Error Feedback
+                                let wrongSentence = "";
+                                const noun = itemLabel.replace(/^(le |la |l'|les )/, '');
+                                
+                                if (zoneId === 'joue') {
+                                    if (itemLabel.startsWith('le ')) wrongSentence = `Je joue au ${noun}`;
+                                    else if (itemLabel.startsWith('la ')) wrongSentence = `Je joue à la ${noun}`;
+                                    else if (itemLabel.startsWith("l'")) wrongSentence = `Je joue à l'${noun}`;
+                                    else if (itemLabel.startsWith('les ')) wrongSentence = `Je joue aux ${noun}`;
+                                    else wrongSentence = `Je joue à ${itemLabel}`;
+                                } else if (zoneId === 'fais') {
+                                    if (itemLabel.startsWith('le ')) wrongSentence = `Je fais du ${noun}`;
+                                    else if (itemLabel.startsWith('la ')) wrongSentence = `Je fais de la ${noun}`;
+                                    else if (itemLabel.startsWith("l'")) wrongSentence = `Je fais de l'${noun}`;
+                                    else if (itemLabel.startsWith('les ')) wrongSentence = `Je fais des ${noun}`;
+                                    else wrongSentence = `Je fais de ${itemLabel}`;
+                                } else if (zoneId === 'mange') {
+                                    // Keep simple for mange/bois to avoid complex partitive logic issues
+                                    wrongSentence = `Je mange ${itemLabel}`;
+                                } else if (zoneId === 'bois') {
+                                    wrongSentence = `Je bois ${itemLabel}`;
+                                } else {
+                                    wrongSentence = `${zoneLabel} ${itemLabel}`;
+                                }
+                                
+                                activeSentence.textContent = wrongSentence + ' ✕';
                             }
                             
                             activeSentence.classList.add('visible');
