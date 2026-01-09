@@ -301,14 +301,14 @@
 
         function getLevel3Articles(article) {
             if (article === "les") return ["des"];
-            if (article === "l'") return ["le", "la"];
+            if (article === "l'") return ["l'"];
             if (article === "le" || article === "la") return [article];
             return [article];
         }
 
         function getLevel3ArticleOptions(article) {
             if (article === "le" || article === "la" || article === "l'") {
-                return ["le", "la"];
+                return ["le", "la", "l'"];
             }
             return ["des", "de la", "du"];
         }
@@ -501,7 +501,7 @@
                 selectedArticle = null;
 
                 const articleGrid = document.createElement('div');
-                articleGrid.className = 'grid grid-cols-2 gap-3';
+                articleGrid.className = 'grid grid-cols-3 gap-3';
                 articleOptions.forEach(opt => {
                     const btn = document.createElement('button');
                     btn.className = 'btn-option w-full bg-white border-2 border-indigo-100 text-indigo-900 font-semibold py-3 px-2 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 text-lg shadow-sm';
@@ -598,10 +598,13 @@
                 return;
             }
 
+            const allArticleBtns = Array.from(articleGrid.querySelectorAll('button'));
+            allArticleBtns.forEach(b => b.classList.remove('wrong-anim', 'correct-anim'));
+            inputEl.classList.remove('wrong-anim', 'correct-anim');
+
             isAnswerLocked = true;
             const articleOk = correctArticles.includes(selectedArticle);
             const nounOk = typed === normalizeWord(correctNoun);
-            const allArticleBtns = Array.from(articleGrid.querySelectorAll('button'));
 
             if (articleOk && nounOk) {
                 score++;
@@ -611,6 +614,10 @@
                     if (correctArticles.includes(b.innerText)) b.classList.add('correct-anim');
                 });
                 inputEl.classList.add('correct-anim');
+                setTimeout(() => {
+                    currentIndex++;
+                    loadQuestion();
+                }, 1200);
             } else {
                 allArticleBtns.forEach(b => {
                     if (correctArticles.includes(b.innerText)) b.classList.add('correct-anim');
@@ -627,12 +634,12 @@
                     correct: `${correctArticles[0]} ${correctNoun}`,
                     selected: `${selectedArticle} ${inputEl.value.trim()}`
                 });
+                setTimeout(() => {
+                    allArticleBtns.forEach(b => b.classList.remove('wrong-anim'));
+                    inputEl.classList.remove('wrong-anim');
+                    isAnswerLocked = false;
+                }, 600);
             }
-
-            setTimeout(() => {
-                currentIndex++;
-                loadQuestion();
-            }, 1200);
         }
 
         function endGame() {
