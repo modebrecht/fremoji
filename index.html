@@ -36,7 +36,7 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100">
 
-    <div class="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white min-h-[650px] flex flex-col relative">
+    <div class="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white min-h-[600px] flex flex-col relative">
         
         <div class="bg-indigo-600 p-4 text-white flex justify-between items-center shadow-md z-10">
             <div class="flex items-center gap-2">
@@ -49,15 +49,14 @@
         </div>
 
         <div id="menu-screen" class="p-6 fade-in flex-grow flex flex-col">
-            <h2 class="text-2xl text-center font-bold text-gray-700 mb-6">Themenwahl</h2>
-            <div class="grid grid-cols-1 gap-4 overflow-y-auto pb-4 flex-1" id="category-grid">
-                </div>
-
-            <div class="pt-2">
-                <button onclick="showHistory()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-700 transition shadow-lg flex items-center justify-center gap-2">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-700">Themenwahl</h2>
+                <button onclick="showHistory()" class="bg-slate-800 text-white py-2 px-4 rounded-xl font-bold hover:bg-slate-700 transition shadow-lg flex items-center gap-2 text-sm">
                     📄 Resultate & Export
                 </button>
             </div>
+            <div class="grid grid-cols-1 gap-4 overflow-y-auto pb-4 flex-1" id="category-grid">
+                </div>
         </div>
 
         <div id="history-screen" class="hidden p-6 fade-in flex-grow flex flex-col h-full bg-gray-50">
@@ -79,27 +78,22 @@
         </div>
 
         <div id="game-screen" class="hidden flex-grow flex flex-col h-full">
-            <div class="w-full bg-gray-200 h-2">
-                <div class="bg-green-500 h-2 transition-all duration-500" style="width: 0%" id="progress-bar"></div>
+            <div class="w-full bg-gray-200 h-3">
+                <div class="bg-green-500 h-3 transition-all duration-500" style="width: 0%" id="progress-bar"></div>
             </div>
-
-            <div class="p-6 text-center fade-in flex-grow flex flex-col justify-center">
+            <div class="px-6 pt-3 pb-3 text-center fade-in flex-grow flex flex-col justify-center">
                 <div class="flex justify-between items-center mb-2">
-                     <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider" id="topic-label">THEMA</span>
-                     <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider" id="level-label">LEVEL</span>
+                     <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider" id="topic-level-label">THEMA LVL 1</span>
+                     <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider" id="level-label">Frage 1/10</span>
                 </div>
                 
-                <div class="text-7xl mb-4 mt-2 emoji-display emoji-bounce drop-shadow-md cursor-default select-none" id="emoji-container">🤔</div>
+                <div class="text-[4.727rem] mb-4 mt-2 emoji-display emoji-bounce drop-shadow-md cursor-default select-none" id="emoji-container">🤔</div>
                 
                 <div id="word-hint" class="text-2xl font-bold text-gray-600 mb-6 h-8 flex justify-center items-center"></div>
 
                 <div class="grid grid-cols-1 gap-3" id="options-container">
                     </div>
                 
-                <div class="mt-auto pt-6 flex justify-between text-gray-400 text-xs font-mono">
-                    <span>Frage <span id="current-q">1</span>/<span id="total-q">10</span></span>
-                    <span id="score-display">Punkte: 0</span>
-                </div>
             </div>
         </div>
 
@@ -443,15 +437,16 @@
 
             const lvlNames = { 1: "Wortschatz", 2: "Artikel", 3: "Meister" };
 
-            document.getElementById('topic-label').innerText = category.title;
-            document.getElementById('level-label').innerText = `Lvl ${level}: ${lvlNames[level]}`;
+            document.getElementById('topic-level-label').innerText = `${category.title} LVL ${level}`;
+            document.getElementById('level-label').innerText = `Frage 1/${currentSet.length}`;
             
             document.getElementById('menu-screen').classList.add('hidden');
             document.getElementById('history-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('home-btn').classList.remove('hidden');
-            document.getElementById('score-display').innerText = `Punkte: 0`;
+            const scoreEl = document.getElementById('score-display');
+            if (scoreEl) scoreEl.innerText = `Punkte: 0`;
 
             loadQuestion();
         }
@@ -468,8 +463,7 @@
             container.innerHTML = '';
             
             document.getElementById('emoji-container').innerText = q.emoji;
-            document.getElementById('current-q').innerText = currentIndex + 1;
-            document.getElementById('total-q').innerText = currentSet.length;
+            document.getElementById('level-label').innerText = `Frage ${currentIndex + 1}/${currentSet.length}`;
             document.getElementById('progress-bar').style.width = `${(currentIndex / currentSet.length) * 100}%`;
 
             let correctVal = "";
@@ -566,7 +560,8 @@
             if (isCorrect) {
                 score++;
                 btn.classList.add('correct-anim');
-                document.getElementById('score-display').innerText = `Punkte: ${score}`;
+                const scoreEl = document.getElementById('score-display');
+                if (scoreEl) scoreEl.innerText = `Punkte: ${score}`;
             } else {
                 btn.classList.add('wrong-anim');
                 
@@ -610,7 +605,8 @@
 
             if (articleOk && nounOk) {
                 score++;
-                document.getElementById('score-display').innerText = `Punkte: ${score}`;
+                const scoreEl = document.getElementById('score-display');
+                if (scoreEl) scoreEl.innerText = `Punkte: ${score}`;
                 allArticleBtns.forEach(b => {
                     if (correctArticles.includes(b.innerText)) b.classList.add('correct-anim');
                 });
