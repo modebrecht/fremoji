@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Französisch Trainer - FREMOJI</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e2e;
+            --surface-hover: #2a2a3c;
+            --primary-color: #7c4dff; /* Soft Purple */
+            --accent-color: #00bcd4; /* Cyan */
+            --success-color: #00e676;
+            --error-color: #ff5252;
+            --text-main: #ffffff;
+            --text-muted: #b0b0c0;
+            --card-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            --drag-shadow: 0 12px 24px rgba(0,0,0,0.5);
+            --radius: 12px;
+            --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        /* --- UI Components --- */
+        
+        header {
+            padding: 16px;
+            background-color: var(--surface-color);
+            box-shadow: var(--card-shadow);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 1.2rem; font-weight: 600; color: var(--accent-color); }
+        
+        select {
+            background: var(--surface-hover);
+            color: white;
+            border: 1px solid var(--primary-color);
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            outline: none;
+            max-width: 200px;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        .stat-val { color: var(--text-main); font-weight: bold; margin-left: 4px; }
+
+        .hint-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: -5px;
+        }
+
+        /* --- Game Area --- */
+
+        main {
+            flex: 1;
+            padding: 16px 20px; /* Update: 20px Seitenabstand hinzugefügt */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Drop Zones Grid */
+        .drop-zones {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+        }
+
+        .zone {
+            background-color: var(--surface-color);
+            border: 2px dashed #444;
+            border-radius: var(--radius);
+            padding: 16px;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .zone.drag-over {
+            border-color: var(--accent-color);
+            background-color: rgba(0, 188, 212, 0.1);
+        }
+
+        /* Zone wird grün bei korrekter Antwort */
+        .zone.correct {
+            border-color: var(--success-color);
+            background-color: rgba(0, 230, 118, 0.2);
+        }
+
+        .zone-header {
+            text-align: center;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        
+        /* Styles für Labels am Boden (Level 1 & 4) */
+        .zone.label-bottom .zone-header {
+            order: 2; /* Nach unten schieben */
+            margin-bottom: 0;
+            margin-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 8px;
+        }
+        
+        .zone.label-bottom .zone-content {
+            order: 1; /* Nach oben schieben */
+        }
+        
+        .zone-label {
+            display: block;
+            font-weight: bold;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+        
+        .zone-note {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .zone-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-start; /* Standard: Links */
+            align-content: flex-start;   
+            width: 100%;
+            flex: 1;
+        }
+        
+        /* Zentrierung für Level 2 & 3 */
+        .zone-content.centered {
+            justify-content: center;
+            align-content: center;
+        }
+
+        /* Active Sentence Display (Level 4) */
+        .active-sentence {
+            height: 40px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text-main);
+            margin: 5px 0;
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .active-sentence.visible { opacity: 1; }
+        .active-sentence.valid { color: var(--success-color); }
+        .active-sentence.invalid { color: var(--error-color); }
+
+        /* Pool Area */
+        .pool-container {
+            background-color: var(--surface-color);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--card-shadow);
+            min-height: 100px;
+        }
+
+        .pool-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .pool-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: flex-start; 
+            align-content: flex-start;
+        }
+
+        /* Draggable Item */
+        .item {
+            width: 56px;
+            height: 56px;
+            background-color: #383848;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            touch-action: none; /* Prevents scrolling while dragging */
+            transition: transform 0.1s, box-shadow 0.1s;
+            border: 3px solid transparent;
+            position: relative;
+        }
+
+        /* Modifier for items with text (Level 1) */
+        .item.with-text {
+            width: auto;
+            min-width: 70px;
+            height: auto;
+            min-height: 70px;
+            padding: 8px;
+            border-radius: var(--radius);
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .item-text {
+            font-size: 0.85rem; 
+            color: var(--text-main);
+            text-align: center;
+            pointer-events: none;
+            line-height: 1.2;
+        }
+
+        .item:active { cursor: grabbing; }
+
+        /* Feedback States */
+        .item.correct { border-color: var(--success-color); background-color: rgba(0, 230, 118, 0.1); }
+        .item.wrong { border-color: var(--error-color); opacity: 0.8; cursor: pointer; /* Zeigt, dass es klickbar ist */ }
+
+        /* Fehler-Indikator (X) */
+        .item.wrong::after {
+            content: '✕';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            background-color: var(--error-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            border: 2px solid var(--surface-color);
+            z-index: 5;
+        }
+        
+        /* Verschwinden-Animation (für Level 2 & 3) */
+        @keyframes vanish {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        .item.vanish, .zone.vanish { /* Auch die Zone kann jetzt vanishen */
+            animation: vanish 0.6s forwards ease-in;
+            pointer-events: none; /* Nicht mehr klickbar */
+        }
+
+        /* Dragging State (Fixed) */
+        .item.dragging {
+            position: fixed;
+            z-index: 9999;
+            box-shadow: var(--drag-shadow);
+            transform: scale(1.1);
+            pointer-events: none; /* Let clicks pass through to detect drop zones */
+        }
+        
+        .item.dragging-source {
+            opacity: 0.3;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            padding: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            border-radius: 50px;
+            padding: 10px 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:active { transform: scale(0.96); }
+
+        .btn-check { background-color: var(--primary-color); color: white; }
+        .btn-reset { background-color: #383848; color: white; }
+        .btn-shuffle { background-color: #383848; color: var(--accent-color); }
+        
+        .btn-next { background-color: var(--success-color); color: #000; display: none; }
+        .btn-errors { background-color: var(--error-color); color: white; display: none; }
+        .btn-delete { background-color: #d32f2f; color: white; margin-top: 20px; font-size: 0.8rem; padding: 8px 16px; }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background-color: var(--surface-color);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            box-shadow: var(--drag-shadow);
+            font-size: 0.9rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUpFade 0.3s forwards, fadeOut 0.5s 2.5s forwards;
+            border-left: 4px solid var(--accent-color);
+            max-width: 90vw;
+            text-align: center;
+        }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* Results View & Error View */
+        .view-container, .results-view {
+            background-color: var(--surface-color);
+            border-radius: var(--radius);
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #333;
+        }
+        .result-row:last-child { border-bottom: none; }
+        .result-label { color: var(--text-muted); }
+        .result-val { font-weight: bold; color: var(--accent-color); }
+        .result-val.perfect { color: var(--success-color); }
+
+        .error-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .error-card {
+            background-color: var(--surface-hover);
+            border: 1px solid var(--error-color);
+            border-radius: var(--radius);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .error-emoji { font-size: 1.8rem; margin-bottom: 4px; }
+        .error-text { font-size: 0.8rem; color: var(--text-main); line-height: 1.1; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-top">
+            <h1>🇫🇷 FREMOJI</h1>
+            <select id="level-select"></select>
+        </div>
+        <div id="subtitle" class="hint-text"></div>
+        <div class="stats-bar">
+            <span>Platziert: <span id="placed-count" class="stat-val">0</span>/<span id="total-count" class="stat-val">0</span></span>
+            <span style="margin-left:auto">Score: <span id="score" class="stat-val">0</span></span>
+        </div>
+    </header>
+
+    <main id="game-container">
+        <!-- Content will be injected here -->
+    </main>
+
+    <footer class="controls">
+        <button class="btn-reset" onclick="game.reset()">↺ Reset</button>
+        <button class="btn-shuffle" onclick="game.shuffle()">⤮ Mischen</button>
+        <button class="btn-check" onclick="game.check()">✔ Prüfen</button>
+        <button class="btn-errors" onclick="game.renderErrorView()">⚠️ Fehler ansehen</button>
+        <button class="btn-next" onclick="game.nextLevel()">Nächste Aufgabe ➔</button>
+    </footer>
+
+    <div id="toasts" class="toast-container"></div>
+
+    <script>
+        /* * =========================================
+         * DATA CONFIGURATION
+         * =========================================
+         */
+        
+        // Harmonized set of 30 Items (15 Cuisine, 15 Sport)
+        const ITEMS = {
+            // Cuisine (15)
+            pomme: { emoji: '🍎', id: 'pomme', label: 'la pomme' },
+            pain: { emoji: '🥖', id: 'pain', label: 'le pain' },
+            chocolat: { emoji: '🍫', id: 'chocolat', label: 'le chocolat' },
+            pizza: { emoji: '🍕', id: 'pizza', label: 'la pizza' },
+            gateau: { emoji: '🍰', id: 'gateau', label: 'le gâteau' },
+            fraise: { emoji: '🍓', id: 'fraise', label: 'la fraise' },
+            croissant: { emoji: '🥐', id: 'croissant', label: 'le croissant' },
+            hamburger: { emoji: '🍔', id: 'hamburger', label: 'le hamburger' },
+            frites: { emoji: '🍟', id: 'frites', label: 'les frites' },
+            glace: { emoji: '🍦', id: 'glace', label: 'la glace' },
+            banane: { emoji: '🍌', id: 'banane', label: 'la banane' },
+            viande: { emoji: '🥩', id: 'viande', label: 'la viande' },
+            
+            // Drinks (Cuisine)
+            lait: { emoji: '🥛', id: 'lait', label: 'le lait' },
+            cafe: { emoji: '☕', id: 'cafe', label: 'le café' },
+            eau: { emoji: '💧', id: 'eau', label: "l'eau" },
+            
+            // Sport (15)
+            foot: { emoji: '⚽', id: 'foot', label: 'le foot' },
+            basket: { emoji: '🏀', id: 'basket', label: 'le basket' },
+            tennis: { emoji: '🎾', id: 'tennis', label: 'le tennis' },
+            rugby: { emoji: '🏉', id: 'rugby', label: 'le rugby' },
+            volley: { emoji: '🏐', id: 'volley', label: 'le volley' },
+            pingpong: { emoji: '🏓', id: 'pingpong', label: 'le ping-pong' },
+            golf: { emoji: '⛳', id: 'golf', label: 'le golf' },
+            
+            natation: { emoji: '🏊', id: 'natation', label: 'la natation' },
+            velo: { emoji: '🚴', id: 'velo', label: 'le vélo' },
+            ski: { emoji: '⛷️', id: 'ski', label: 'le ski' },
+            gym: { emoji: '🤸', id: 'gym', label: 'la gymnastique' },
+            course: { emoji: '🏃', id: 'course', label: 'la course' },
+            boxe: { emoji: '🥊', id: 'boxe', label: 'la boxe' },
+            judo: { emoji: '🥋', id: 'judo', label: 'le judo' },
+            danse: { emoji: '💃', id: 'danse', label: 'la danse' }
+        };
+
+        const LEVELS = [
+            {
+                id: 'l1',
+                name: 'Level 1: Kategorien',
+                subtitle: 'Sortiere: Essen oder Sport?',
+                hint: 'Ziehe die Emojis in die richtige Kategorie.',
+                showItemLabels: true,
+                immediateValidation: true,
+                highlightZone: false,
+                centerContent: false,
+                labelAtBottom: true, // Labels unten
+                categories: [
+                    { id: 'cuisine', label: 'Cuisine 🍽️', note: '' },
+                    { id: 'sport', label: 'Sport 🏆', note: '' }
+                ],
+                items: [
+                    // 15 Cuisine
+                    { ...ITEMS.pomme, category: 'cuisine' }, { ...ITEMS.pain, category: 'cuisine' }, 
+                    { ...ITEMS.chocolat, category: 'cuisine' }, { ...ITEMS.pizza, category: 'cuisine' },
+                    { ...ITEMS.gateau, category: 'cuisine' }, { ...ITEMS.fraise, category: 'cuisine' },
+                    { ...ITEMS.croissant, category: 'cuisine' }, { ...ITEMS.hamburger, category: 'cuisine' },
+                    { ...ITEMS.frites, category: 'cuisine' }, { ...ITEMS.glace, category: 'cuisine' },
+                    { ...ITEMS.banane, category: 'cuisine' }, { ...ITEMS.viande, category: 'cuisine' },
+                    { ...ITEMS.lait, category: 'cuisine' }, { ...ITEMS.cafe, category: 'cuisine' },
+                    { ...ITEMS.eau, category: 'cuisine' },
+                    
+                    // 15 Sport
+                    { ...ITEMS.foot, category: 'sport' }, { ...ITEMS.basket, category: 'sport' },
+                    { ...ITEMS.tennis, category: 'sport' }, { ...ITEMS.rugby, category: 'sport' },
+                    { ...ITEMS.volley, category: 'sport' }, { ...ITEMS.pingpong, category: 'sport' },
+                    { ...ITEMS.golf, category: 'sport' }, { ...ITEMS.natation, category: 'sport' },
+                    { ...ITEMS.velo, category: 'sport' }, { ...ITEMS.ski, category: 'sport' },
+                    { ...ITEMS.gym, category: 'sport' }, { ...ITEMS.course, category: 'sport' },
+                    { ...ITEMS.boxe, category: 'sport' }, { ...ITEMS.judo, category: 'sport' },
+                    { ...ITEMS.danse, category: 'sport' }
+                ]
+            },
+            {
+                id: 'l2a',
+                name: 'Level 2: Vokabeln (Cuisine)',
+                subtitle: 'Ordne das Emoji dem französischen Wort zu.',
+                hint: 'Achte auf den Artikel (le/la).',
+                immediateValidation: true,
+                disappearOnCorrect: true,
+                highlightZone: true,
+                centerContent: true,
+                maxItemsPerZone: 1, 
+                labelAtBottom: false, // Standard
+                categories: [
+                    { id: 'pomme', label: 'la pomme', note: '' },
+                    { id: 'pain', label: 'le pain', note: '' },
+                    { id: 'chocolat', label: 'le chocolat', note: '' },
+                    { id: 'pizza', label: 'la pizza', note: '' },
+                    { id: 'gateau', label: 'le gâteau', note: '' },
+                    { id: 'fraise', label: 'la fraise', note: '' },
+                    { id: 'croissant', label: 'le croissant', note: '' },
+                    { id: 'hamburger', label: 'le hamburger', note: '' },
+                    { id: 'frites', label: 'les frites', note: '' },
+                    { id: 'glace', label: 'la glace', note: '' },
+                    { id: 'banane', label: 'la banane', note: '' },
+                    { id: 'viande', label: 'la viande', note: '' },
+                    { id: 'lait', label: 'le lait', note: '' },
+                    { id: 'cafe', label: 'le café', note: '' },
+                    { id: 'eau', label: "l'eau", note: '' }
+                ],
+                items: [
+                    { ...ITEMS.pomme, category: 'pomme' }, { ...ITEMS.pain, category: 'pain' },
+                    { ...ITEMS.chocolat, category: 'chocolat' }, { ...ITEMS.pizza, category: 'pizza' },
+                    { ...ITEMS.gateau, category: 'gateau' }, { ...ITEMS.fraise, category: 'fraise' },
+                    { ...ITEMS.croissant, category: 'croissant' }, { ...ITEMS.hamburger, category: 'hamburger' },
+                    { ...ITEMS.frites, category: 'frites' }, { ...ITEMS.glace, category: 'glace' },
+                    { ...ITEMS.banane, category: 'banane' }, { ...ITEMS.viande, category: 'viande' },
+                    { ...ITEMS.lait, category: 'lait' }, { ...ITEMS.cafe, category: 'cafe' },
+                    { ...ITEMS.eau, category: 'eau' }
+                ]
+            },
+            {
+                id: 'l2b',
+                name: 'Level 3: Vokabeln (Sport)',
+                subtitle: 'Wie heißt die Sportart auf Französisch?',
+                hint: 'Ziehe das Bild zum Wort.',
+                immediateValidation: true,
+                disappearOnCorrect: true,
+                highlightZone: true,
+                centerContent: true,
+                maxItemsPerZone: 1,
+                labelAtBottom: false, // Standard
+                categories: [
+                    { id: 'foot', label: 'le foot', note: '' },
+                    { id: 'basket', label: 'le basket', note: '' },
+                    { id: 'tennis', label: 'le tennis', note: '' },
+                    { id: 'rugby', label: 'le rugby', note: '' },
+                    { id: 'volley', label: 'le volley', note: '' },
+                    { id: 'pingpong', label: 'le ping-pong', note: '' },
+                    { id: 'golf', label: 'le golf', note: '' },
+                    { id: 'natation', label: 'la natation', note: '' },
+                    { id: 'velo', label: 'le vélo', note: '' },
+                    { id: 'ski', label: 'le ski', note: '' },
+                    { id: 'gym', label: 'la gymnastique', note: '' },
+                    { id: 'course', label: 'la course', note: '' },
+                    { id: 'boxe', label: 'la boxe', note: '' },
+                    { id: 'judo', label: 'le judo', note: '' },
+                    { id: 'danse', label: 'la danse', note: '' }
+                ],
+                items: [
+                    { ...ITEMS.foot, category: 'foot' }, { ...ITEMS.basket, category: 'basket' },
+                    { ...ITEMS.tennis, category: 'tennis' }, { ...ITEMS.rugby, category: 'rugby' },
+                    { ...ITEMS.volley, category: 'volley' }, { ...ITEMS.pingpong, category: 'pingpong' },
+                    { ...ITEMS.golf, category: 'golf' },
+                    { ...ITEMS.natation, category: 'natation' }, { ...ITEMS.velo, category: 'velo' },
+                    { ...ITEMS.ski, category: 'ski' }, { ...ITEMS.gym, category: 'gym' },
+                    { ...ITEMS.course, category: 'course' }, { ...ITEMS.boxe, category: 'boxe' },
+                    { ...ITEMS.judo, category: 'judo' }, { ...ITEMS.danse, category: 'danse' }
+                ]
+            },
+            {
+                id: 'l3',
+                name: 'Level 4: Ganze Sätze',
+                subtitle: 'Bilde Sätze! Je mange/bois vs Je joue/fais.',
+                hint: 'Wenn grün: Klicke auf das Emoji für den Satz!',
+                speakOnCorrect: true,
+                showDynamicSentence: true,
+                labelAtBottom: true, // Labels unten
+                categories: [
+                    { id: 'mange', label: 'Je mange...', note: '(etw. essen)' },
+                    { id: 'bois', label: 'Je bois...', note: '(etw. trinken)' },
+                    { id: 'joue', label: 'Je joue au/à...', note: '(Sportart mit Ball/Spiel)' },
+                    { id: 'fais', label: 'Je fais du/de la...', note: '(Sportart ohne Ball)' }
+                ],
+                items: [
+                    // Mange (12 items)
+                    { ...ITEMS.pomme, category: 'mange', say: 'Je mange une pomme.' },
+                    { ...ITEMS.pain, category: 'mange', say: 'Je mange du pain.' },
+                    { ...ITEMS.chocolat, category: 'mange', say: 'Je mange du chocolat.' },
+                    { ...ITEMS.pizza, category: 'mange', say: 'Je mange de la pizza.' },
+                    { ...ITEMS.gateau, category: 'mange', say: 'Je mange du gâteau.' },
+                    { ...ITEMS.fraise, category: 'mange', say: 'Je mange une fraise.' },
+                    { ...ITEMS.croissant, category: 'mange', say: 'Je mange un croissant.' },
+                    { ...ITEMS.hamburger, category: 'mange', say: 'Je mange un hamburger.' },
+                    { ...ITEMS.frites, category: 'mange', say: 'Je mange des frites.' },
+                    { ...ITEMS.glace, category: 'mange', say: 'Je mange de la glace.' },
+                    { ...ITEMS.banane, category: 'mange', say: 'Je mange une banane.' },
+                    { ...ITEMS.viande, category: 'mange', say: 'Je mange de la viande.' },
+                    // Bois (3 items)
+                    { ...ITEMS.lait, category: 'bois', say: 'Je bois du lait.' },
+                    { ...ITEMS.cafe, category: 'bois', say: 'Je bois du café.' },
+                    { ...ITEMS.eau, category: 'bois', say: "Je bois de l'eau." },
+                    // Joue (7 items)
+                    { ...ITEMS.foot, category: 'joue', say: 'Je joue au foot.' },
+                    { ...ITEMS.basket, category: 'joue', say: 'Je joue au basket.' },
+                    { ...ITEMS.tennis, category: 'joue', say: 'Je joue au tennis.' },
+                    { ...ITEMS.rugby, category: 'joue', say: 'Je joue au rugby.' },
+                    { ...ITEMS.volley, category: 'joue', say: 'Je joue au volley.' },
+                    { ...ITEMS.pingpong, category: 'joue', say: 'Je joue au ping-pong.' },
+                    { ...ITEMS.golf, category: 'joue', say: 'Je joue au golf.' },
+                    // Fais (8 items)
+                    { ...ITEMS.natation, category: 'fais', say: 'Je fais de la natation.' },
+                    { ...ITEMS.velo, category: 'fais', say: 'Je fais du vélo.' },
+                    { ...ITEMS.ski, category: 'fais', say: 'Je fais du ski.' },
+                    { ...ITEMS.gym, category: 'fais', say: 'Je fais de la gymnastique.' },
+                    { ...ITEMS.course, category: 'fais', say: 'Je fais de la course.' },
+                    { ...ITEMS.boxe, category: 'fais', say: 'Je fais de la boxe.' },
+                    { ...ITEMS.judo, category: 'fais', say: 'Je fais du judo.' },
+                    { ...ITEMS.danse, category: 'fais', say: 'Je fais de la danse.' }
+                ]
+            }
+        ];
+
+        /* * =========================================
+         * GAME ENGINE
+         * =========================================
+         */
+
+        const game = {
+            currentLevelIndex: 0,
+            placedItems: {}, 
+            results: {}, 
+            itemAttempted: {}, // Tracks attempt for current level run
+            currentErrors: [], // List of Item IDs that were failed in the current run
+
+            init() {
+                this.loadData(); // Load from LocalStorage
+                this.renderLevelSelector();
+                this.loadLevel(0);
+                
+                document.getElementById('level-select').addEventListener('change', (e) => {
+                    const val = e.target.value;
+                    if (val === 'results') {
+                        this.renderResultsView();
+                    } else {
+                        this.loadLevel(parseInt(val));
+                    }
+                });
+
+                document.addEventListener('pointerdown', this.handleDragStart.bind(this));
+                document.addEventListener('pointermove', this.handleDragMove.bind(this));
+                document.addEventListener('pointerup', this.handleDragEnd.bind(this));
+            },
+
+            saveData() {
+                localStorage.setItem('fremoji_results', JSON.stringify(this.results));
+            },
+
+            loadData() {
+                const data = localStorage.getItem('fremoji_results');
+                if (data) {
+                    this.results = JSON.parse(data);
+                }
+            },
+
+            clearData() {
+                if (confirm("Möchtest du wirklich alle gespeicherten Resultate löschen?")) {
+                    localStorage.removeItem('fremoji_results');
+                    this.results = {};
+                    this.renderResultsView();
+                    this.showToast("Daten gelöscht.");
+                }
+            },
+
+            renderLevelSelector() {
+                const sel = document.getElementById('level-select');
+                let html = LEVELS.map((l, i) => `<option value="${i}">${l.name}</option>`).join('');
+                html += `<option value="results">📊 Resultate</option>`;
+                sel.innerHTML = html;
+            },
+
+            loadLevel(index) {
+                if (index === 'results') { this.renderResultsView(); return; }
+                
+                this.currentLevelIndex = index;
+                const level = LEVELS[index];
+                
+                this.placedItems = {};
+                this.itemAttempted = {}; 
+                this.currentErrors = []; // Reset errors for new run
+                
+                level.items.forEach(item => {
+                    this.placedItems[item.id] = null;
+                    this.itemAttempted[item.id] = false; 
+                });
+
+                document.getElementById('subtitle').textContent = level.subtitle + " " + (level.hint || "");
+                document.getElementById('total-count').textContent = level.items.length;
+                document.getElementById('placed-count').textContent = '0';
+                document.getElementById('score').textContent = '0';
+                
+                const btnCheck = document.querySelector('.btn-check');
+                const btnNext = document.querySelector('.btn-next');
+                const btnErrors = document.querySelector('.btn-errors');
+                
+                btnNext.style.display = 'none'; 
+                btnErrors.style.display = 'none';
+                
+                // Show game controls again
+                document.querySelector('.btn-reset').style.display = 'flex';
+                document.querySelector('.btn-shuffle').style.display = 'flex';
+                
+                if (level.immediateValidation) {
+                    btnCheck.style.display = 'none';
+                } else {
+                    btnCheck.style.display = 'flex';
+                }
+
+                // Render Layout with Active Sentence Area ONLY if needed
+                const container = document.getElementById('game-container');
+                const sentenceHtml = level.showDynamicSentence ? '<div id="active-sentence" class="active-sentence"></div>' : '';
+
+                container.innerHTML = `
+                    <div id="drop-zones" class="drop-zones">
+                        ${level.categories.map(cat => `
+                            <div class="zone ${level.labelAtBottom ? 'label-bottom' : ''}" data-id="${cat.id}">
+                                <div class="zone-header">
+                                    <span class="zone-label">${cat.label}</span>
+                                    ${cat.note ? `<span class="zone-note">${cat.note}</span>` : ''}
+                                </div>
+                                <div class="zone-content ${level.centerContent ? 'centered' : ''}"></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    ${sentenceHtml}
+
+                    <div class="pool-container">
+                        <span class="pool-label">Emojis (Drag & Drop)</span>
+                        <div id="pool" class="pool-content"></div>
+                    </div>
+                `;
+
+                this.renderItems();
+            },
+
+            renderItems() {
+                const level = LEVELS[this.currentLevelIndex];
+                const pool = document.getElementById('pool');
+                
+                // Security check if pool exists
+                if (!pool) return;
+                
+                pool.innerHTML = '';
+                document.querySelectorAll('.zone-content').forEach(el => el.innerHTML = '');
+
+                const itemsToRender = [...level.items];
+                for (let i = itemsToRender.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [itemsToRender[i], itemsToRender[j]] = [itemsToRender[j], itemsToRender[i]];
+                }
+
+                itemsToRender.forEach(item => {
+                    const loc = this.placedItems[item.id];
+                    const el = document.createElement('div');
+                    el.className = 'item';
+                    el.textContent = item.emoji;
+                    el.dataset.id = item.id;
+                    el.dataset.targetCategory = item.category;
+                    el.dataset.label = item.label || ''; // Store label for sentence building
+                    el.dataset.say = item.say || "";
+
+                    if (level.showItemLabels && item.label) {
+                        el.classList.add('with-text');
+                        const span = document.createElement('span');
+                        span.className = 'item-text';
+                        span.textContent = item.label;
+                        el.appendChild(span);
+                    }
+                    
+                    el.addEventListener('click', (e) => {
+                        if (el.classList.contains('correct') && level.speakOnCorrect) {
+                            this.showToast(el.dataset.say || "Richtig!");
+                            e.stopPropagation();
+                        }
+                        if (el.classList.contains('wrong')) {
+                            document.getElementById('pool').appendChild(el);
+                            this.placedItems[item.id] = null;
+                            el.classList.remove('wrong');
+                            this.updateStats();
+                            e.stopPropagation();
+                        }
+                    });
+
+                    if (loc) {
+                        const zoneEl = document.querySelector(`.zone[data-id="${loc}"] .zone-content`);
+                        if (zoneEl) zoneEl.appendChild(el);
+                        else pool.appendChild(el);
+                    } else {
+                        pool.appendChild(el);
+                    }
+                });
+
+                this.updateStats();
+            },
+
+            renderResultsView() {
+                const container = document.getElementById('game-container');
+                let html = `<div class="results-view"><h2>📊 Deine Resultate</h2>`;
+                
+                LEVELS.forEach(level => {
+                    const res = this.results[level.id];
+                    let text = "Noch nicht gelöst";
+                    let cssClass = "result-val";
+                    
+                    if (res) {
+                        const percent = Math.round((res.correctFirstTry / res.total) * 100);
+                        text = `${res.correctFirstTry} / ${res.total} richtig (${percent}%)`;
+                        if (percent === 100) cssClass += " perfect";
+                    }
+
+                    html += `
+                        <div class="result-row">
+                            <span class="result-label">${level.name}</span>
+                            <span class="${cssClass}">${text}</span>
+                        </div>
+                    `;
+                });
+                
+                // Löschen Button
+                html += `<div style="text-align:center;"><button class="btn-delete" onclick="game.clearData()">Daten löschen 🗑️</button></div>`;
+                
+                html += `</div>`;
+                container.innerHTML = html;
+                
+                document.querySelector('.btn-check').style.display = 'none';
+                document.querySelector('.btn-next').style.display = 'none';
+                document.querySelector('.btn-errors').style.display = 'none';
+                
+                // Hide game controls in results view
+                document.querySelector('.btn-reset').style.display = 'none';
+                document.querySelector('.btn-shuffle').style.display = 'none';
+                
+                document.getElementById('subtitle').textContent = "Übersicht der beim ersten Versuch gelösten Aufgaben.";
+                document.getElementById('level-select').value = "results";
+            },
+
+            renderErrorView() {
+                const container = document.getElementById('game-container');
+                const level = LEVELS[this.currentLevelIndex];
+                
+                // Filter Items based on recorded errors
+                const errorItems = level.items.filter(item => this.currentErrors.includes(item.id));
+                
+                let html = `<div class="view-container"><h2>⚠️ Deine Fehler</h2>`;
+                html += `<p>Diese Begriffe waren schwierig:</p><div class="error-grid">`;
+                
+                errorItems.forEach(item => {
+                    html += `
+                        <div class="error-card">
+                            <span class="error-emoji">${item.emoji}</span>
+                            <span class="error-text">${item.label || item.say || '???'}</span>
+                        </div>
+                    `;
+                });
+                
+                html += `</div></div>`;
+                container.innerHTML = html;
+                
+                // Buttons anpassen
+                document.querySelector('.btn-errors').style.display = 'none'; // Verstecken, da wir schon da sind
+            },
+
+            shuffle() {
+                const level = LEVELS[this.currentLevelIndex];
+                if (!level) return; 
+                
+                level.items.forEach(item => {
+                    this.placedItems[item.id] = null;
+                    this.itemAttempted[item.id] = false; 
+                });
+                this.currentErrors = [];
+                
+                // Clear sentence on shuffle
+                const activeSentence = document.getElementById('active-sentence');
+                if (activeSentence) {
+                    activeSentence.classList.remove('visible', 'valid', 'invalid');
+                    activeSentence.textContent = '';
+                }
+
+                this.renderItems();
+                this.showToast("Alles neu gemischt!");
+            },
+
+            reset() {
+                if (document.getElementById('level-select').value === 'results') return;
+                const level = LEVELS[this.currentLevelIndex];
+                level.items.forEach(item => {
+                    this.placedItems[item.id] = null;
+                    this.itemAttempted[item.id] = false;
+                });
+                this.currentErrors = [];
+                
+                // Clear sentence on reset
+                const activeSentence = document.getElementById('active-sentence');
+                if (activeSentence) {
+                    activeSentence.classList.remove('visible', 'valid', 'invalid');
+                    activeSentence.textContent = '';
+                }
+
+                this.renderItems();
+                document.querySelector('.btn-next').style.display = 'none';
+                document.querySelector('.btn-errors').style.display = 'none';
+                this.showToast("Alles zurückgesetzt.");
+            },
+
+            check() {
+                const level = LEVELS[this.currentLevelIndex];
+                let score = 0;
+                let correctCount = 0;
+                let totalPlaced = 0;
+
+                document.querySelectorAll('.item').forEach(el => el.classList.remove('correct', 'wrong'));
+
+                level.items.forEach(item => {
+                    const currentZone = this.placedItems[item.id];
+                    const el = document.querySelector(`.item[data-id="${item.id}"]`);
+                    
+                    if (currentZone) {
+                        totalPlaced++;
+                        if (currentZone === item.category) {
+                            score++;
+                            correctCount++;
+                            el.classList.add('correct');
+                        } else {
+                            el.classList.add('wrong');
+                            this.itemAttempted[item.id] = true;
+                            if(!this.currentErrors.includes(item.id)) this.currentErrors.push(item.id);
+                        }
+                    }
+                });
+
+                document.getElementById('score').textContent = score;
+
+                if (correctCount === level.items.length) {
+                    this.finishLevel(level);
+                } else if (totalPlaced > 0) {
+                    this.showToast(`${score} von ${totalPlaced} sind richtig.`);
+                } else {
+                    this.showToast("Platziere zuerst ein paar Emojis.");
+                }
+            },
+
+            finishLevel(level) {
+                this.showToast("🎉 Perfekt! Level abgeschlossen!");
+                
+                let correctFirstTry = 0;
+                level.items.forEach(item => {
+                    if (!this.itemAttempted[item.id]) {
+                        correctFirstTry++;
+                    }
+                });
+                
+                // Save Results
+                this.results[level.id] = {
+                    correctFirstTry: correctFirstTry,
+                    total: level.items.length
+                };
+                this.saveData();
+
+                const btnNext = document.querySelector('.btn-next');
+                btnNext.style.display = 'flex';
+                
+                // Show Error Button if mistakes were made
+                const btnErrors = document.querySelector('.btn-errors');
+                if (this.currentErrors.length > 0) {
+                    btnErrors.style.display = 'flex';
+                }
+                
+                if (this.currentLevelIndex >= LEVELS.length - 1) {
+                    btnNext.textContent = "Resultate anzeigen 📊";
+                    btnNext.onclick = () => this.renderResultsView();
+                } else {
+                    btnNext.textContent = "Nächste Aufgabe ➔";
+                    btnNext.onclick = () => this.nextLevel();
+                }
+            },
+
+            nextLevel() {
+                const nextIdx = this.currentLevelIndex + 1;
+                if (nextIdx < LEVELS.length) {
+                    this.loadLevel(nextIdx);
+                    document.getElementById('level-select').value = nextIdx;
+                }
+            },
+
+            updateStats() {
+                const placed = Object.values(this.placedItems).filter(v => v !== null).length;
+                document.getElementById('placed-count').textContent = placed;
+            },
+
+            showToast(msg) {
+                const container = document.getElementById('toasts');
+                const t = document.createElement('div');
+                t.className = 'toast';
+                t.textContent = msg;
+                container.appendChild(t);
+                setTimeout(() => t.remove(), 3000);
+            },
+
+            /* --- Drag & Drop Logic --- */
+            
+            dragEl: null,
+            dragOffset: { x: 0, y: 0 },
+            dragSourcePlaceholder: null,
+            originalParent: null,
+
+            handleDragStart(e) {
+                const target = e.target.closest('.item');
+                if (!target || target.classList.contains('correct') || target.classList.contains('vanish')) return;
+                
+                target.classList.remove('correct', 'wrong');
+                this.dragEl = target;
+                this.originalParent = target.parentElement;
+                
+                const rect = target.getBoundingClientRect();
+                this.dragOffset.x = e.clientX - rect.left;
+                this.dragOffset.y = e.clientY - rect.top;
+
+                this.dragSourcePlaceholder = document.createElement('div');
+                this.dragSourcePlaceholder.className = 'item dragging-source';
+                if (target.classList.contains('with-text')) {
+                    this.dragSourcePlaceholder.classList.add('with-text');
+                }
+                
+                this.dragSourcePlaceholder.style.width = rect.width + 'px';
+                this.dragSourcePlaceholder.style.height = rect.height + 'px';
+                target.parentElement.insertBefore(this.dragSourcePlaceholder, target);
+
+                target.classList.add('dragging');
+                target.style.width = rect.width + 'px';
+                target.style.height = rect.height + 'px';
+                document.body.appendChild(target); 
+
+                this.moveAt(e.clientX, e.clientY);
+            },
+
+            handleDragMove(e) {
+                if (!this.dragEl) return;
+                e.preventDefault(); 
+                this.moveAt(e.clientX, e.clientY);
+
+                const prevDisplay = this.dragEl.style.display;
+                this.dragEl.style.display = 'none';
+                const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
+                this.dragEl.style.display = prevDisplay;
+
+                document.querySelectorAll('.zone').forEach(z => z.classList.remove('drag-over'));
+                
+                if (elemBelow) {
+                    const zone = elemBelow.closest('.zone');
+                    if (zone) {
+                        zone.classList.add('drag-over');
+                    }
+                }
+            },
+
+            handleDragEnd(e) {
+                if (!this.dragEl) return;
+                
+                const prevDisplay = this.dragEl.style.display;
+                this.dragEl.style.display = 'none';
+                const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
+                this.dragEl.style.display = prevDisplay;
+
+                const zone = elemBelow ? elemBelow.closest('.zone') : null;
+                const pool = elemBelow ? elemBelow.closest('.pool-container') : null;
+
+                this.dragEl.classList.remove('dragging');
+                this.dragEl.style.position = '';
+                this.dragEl.style.left = '';
+                this.dragEl.style.top = '';
+                this.dragEl.style.width = '';
+                this.dragEl.style.height = '';
+                this.dragEl.style.zIndex = '';
+
+                if (this.dragSourcePlaceholder && this.dragSourcePlaceholder.parentNode) {
+                    this.dragSourcePlaceholder.parentNode.removeChild(this.dragSourcePlaceholder);
+                }
+
+                const level = LEVELS[this.currentLevelIndex];
+                const itemId = this.dragEl.dataset.id;
+
+                if (zone) {
+                    const zoneId = zone.dataset.id;
+                    const content = zone.querySelector('.zone-content');
+
+                    if (level.maxItemsPerZone && level.maxItemsPerZone === 1) {
+                         const existingItemId = Object.keys(this.placedItems).find(key => this.placedItems[key] === zoneId);
+                         if (existingItemId) {
+                             const existingEl = document.querySelector(`.item[data-id="${existingItemId}"]`);
+                             if (existingEl) {
+                                 document.getElementById('pool').appendChild(existingEl);
+                                 existingEl.classList.remove('correct', 'wrong');
+                                 this.placedItems[existingItemId] = null;
+                             }
+                         }
+                    }
+
+                    content.appendChild(this.dragEl);
+                    this.placedItems[itemId] = zoneId;
+
+                    // Update Sentence Display on Drop
+                    const activeSentence = document.getElementById('active-sentence');
+                    if (level.showDynamicSentence && activeSentence) {
+                        const zoneLabel = zone.querySelector('.zone-label').textContent.replace('...', '').trim();
+                        const itemLabel = this.dragEl.dataset.label;
+                        
+                        if (zoneLabel && itemLabel) {
+                            const targetCat = this.dragEl.dataset.targetCategory;
+                            const isValid = zoneId === targetCat;
+                            
+                            // Reset class state first
+                            activeSentence.classList.remove('valid', 'invalid');
+                            
+                            // *** SMART SENTENCE LOGIC ***
+                            if (isValid && this.dragEl.dataset.say) {
+                                activeSentence.textContent = this.dragEl.dataset.say + ' ✓';
+                            } else {
+                                activeSentence.textContent = `${zoneLabel} ${itemLabel} ✕`;
+                            }
+                            
+                            activeSentence.classList.add('visible');
+                            activeSentence.classList.add(isValid ? 'valid' : 'invalid');
+                        }
+                    }
+
+                    if (level.immediateValidation) {
+                        const targetCat = this.dragEl.dataset.targetCategory;
+                        if (zoneId === targetCat) {
+                            this.dragEl.classList.add('correct');
+                            this.dragEl.classList.remove('wrong');
+                            
+                            if (level.highlightZone) zone.classList.add('correct');
+                            
+                            if (level.disappearOnCorrect) {
+                                const elementToVanish = this.dragEl;
+                                const zoneToVanish = zone;
+                                setTimeout(() => {
+                                    if(elementToVanish) elementToVanish.classList.add('vanish');
+                                    if(zoneToVanish) {
+                                        zoneToVanish.classList.add('vanish');
+                                        zoneToVanish.addEventListener('animationend', () => {
+                                            zoneToVanish.style.display = 'none';
+                                        }, { once: true });
+                                    }
+                                }, 1000);
+                            }
+                            this.checkImmediateCompletion();
+                        } else {
+                            this.dragEl.classList.add('wrong');
+                            this.dragEl.classList.remove('correct');
+                            // Mark as attempted wrongly!
+                            this.itemAttempted[itemId] = true;
+                            if(!this.currentErrors.includes(itemId)) this.currentErrors.push(itemId);
+                        }
+                    }
+
+                } else if (pool) {
+                    document.getElementById('pool').appendChild(this.dragEl);
+                    this.placedItems[itemId] = null;
+                    this.dragEl.classList.remove('correct', 'wrong', 'vanish');
+                } else {
+                    this.originalParent.appendChild(this.dragEl);
+                }
+
+                document.querySelectorAll('.zone').forEach(z => z.classList.remove('drag-over'));
+                this.updateStats();
+                this.dragEl = null;
+                this.dragSourcePlaceholder = null;
+                this.originalParent = null;
+            },
+
+            checkImmediateCompletion() {
+                const level = LEVELS[this.currentLevelIndex];
+                const allCorrect = level.items.every(item => {
+                    const zoneId = this.placedItems[item.id];
+                    return zoneId === item.category;
+                });
+
+                const currentScore = level.items.filter(item => this.placedItems[item.id] === item.category).length;
+                document.getElementById('score').textContent = currentScore;
+
+                if (allCorrect) {
+                    this.finishLevel(level);
+                }
+            },
+
+            moveAt(pageX, pageY) {
+                this.dragEl.style.left = (pageX - this.dragOffset.x) + 'px';
+                this.dragEl.style.top = (pageY - this.dragOffset.y) + 'px';
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => game.init());
+
+    </script>
+</body>
+</html>
