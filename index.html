@@ -276,6 +276,35 @@
                 .replace(/œ/g, 'oe');
         }
 
+        function normalizeForPdf(text) {
+            return String(text)
+                .replace(/œ/g, 'oe')
+                .replace(/Œ/g, 'Oe')
+                .replace(/[’']/g, "'")
+                .replace(/à/g, 'a')
+                .replace(/â/g, 'a')
+                .replace(/ä/g, 'a')
+                .replace(/ç/g, 'c')
+                .replace(/é/g, 'e')
+                .replace(/è/g, 'e')
+                .replace(/ê/g, 'e')
+                .replace(/ë/g, 'e')
+                .replace(/î/g, 'i')
+                .replace(/ï/g, 'i')
+                .replace(/ô/g, 'o')
+                .replace(/ö/g, 'o')
+                .replace(/ù/g, 'u')
+                .replace(/û/g, 'u')
+                .replace(/ü/g, 'u');
+        }
+
+        function sanitizePdfText(text) {
+            return normalizeForPdf(text)
+                .replace(/[^\x20-\x7E]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
         function getLevel3Articles(article) {
             if (article === "les") return ["des"];
             if (article === "l'") return ["le", "la"];
@@ -676,44 +705,128 @@
         function exportToPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            
-            doc.setFontSize(20);
-            doc.text("Französisch Trainer - Report", 14, 20);
-            doc.setFontSize(10);
-            doc.text(`Erstellt am: ${new Date().toLocaleString()}`, 14, 28);
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 14;
+            const cardPadding = 6;
+            const cardWidth = pageWidth - margin * 2;
+            const lineHeight = 5;
 
-            const tableColumn = ["Datum", "Thema", "Level", "Score", "Note", "Fehler"];
-            const tableRows = [];
+            doc.setFontSize(18);
+            doc.setTextColor(31, 41, 55);
+            doc.text("Franzoesisch Trainer - Report", margin, 20);
+            doc.setFontSize(10);
+            doc.setTextColor(107, 114, 128);
+            doc.text(`Erstellt am: ${sanitizePdfText(new Date().toLocaleString())}`, margin, 28);
+
+            let y = 36;
 
             gameHistory.forEach(game => {
-                let note = "Ungenügend";
-                if (game.percentage >= 90) note = "Sehr Gut";
-                else if (game.percentage >= 70) note = "Gut";
-                else if (game.percentage >= 50) note = "Genügend";
+                const topic = sanitizePdfText(game.topic);
+                const date = sanitizePdfText(game.date);
+                const level = sanitizePdfText(`LEVEL ${game.level}`);
+                const score = sanitizePdfText(`${game.score}`);
+                const percent = sanitizePdfText(`${game.percentage}%`);
+                const mistakes = (game.mistakes || []).map(m => ({
+                    selected: sanitizePdfText(m.selected),
+                    correct: sanitizePdfText(m.correct)
+                }));
 
-                const mistakesStr = game.mistakes
-                    .map(m => `${m.emoji} (${m.selected} ${m.correct})`)
-                    .join(' | ');
+                doc.setFontSize(10);
+                const prefix = "Fehler: ";
+                const prefixWidth = doc.getTextWidth(prefix);
+                const maxX = margin + cardWidth - cardPadding;
+                let xPos = margin + cardPadding + prefixWidth;
+                let lineCount = mistakes.length > 0 ? 1 : 0;
 
-                const rowData = [
-                    game.date,
-                    game.topic,
-                    game.level,
-                    `${game.score}`,
-                    note,
-                    mistakesStr
-                ];
-                tableRows.push(rowData);
-            });
+                mistakes.forEach((m, idx) => {
+                    const parts = [
+                        { text: m.selected, isSeparator: false },
+                        { text: " ", isSeparator: true },
+                        { text: m.correct, isSeparator: false },
+                        { text: idx < mistakes.length - 1 ? " | " : "", isSeparator: true }
+                    ];
+                    parts.forEach(p => {
+                        if (!p.text) return;
+                        const width = doc.getTextWidth(p.text);
+                        if (xPos + width > maxX) {
+                            lineCount += 1;
+                            xPos = margin + cardPadding;
+                        }
+                        xPos += width;
+                    });
+                });
 
-            doc.autoTable({
-                head: [tableColumn],
-                body: tableRows,
-                startY: 35,
-                styles: { fontSize: 8 },
-                columnStyles: {
-                    5: { cellWidth: 70 } // Wider column for mistakes
+                const headerHeight = 6 + 6;
+                const dividerHeight = mistakes.length > 0 ? 4 : 0;
+                const mistakesHeight = mistakes.length > 0 ? lineHeight * lineCount : 0;
+                const cardHeight = cardPadding * 2 + headerHeight + dividerHeight + mistakesHeight;
+
+                if (y + cardHeight > pageHeight - margin) {
+                    doc.addPage();
+                    y = margin;
                 }
+
+                doc.setDrawColor(229, 231, 235);
+                doc.setFillColor(255, 255, 255);
+                doc.roundedRect(margin, y, cardWidth, cardHeight, 3, 3, 'FD');
+
+                let curY = y + cardPadding + 4;
+                const leftX = margin + cardPadding;
+
+                doc.setFontSize(12);
+                doc.setTextColor(17, 24, 39);
+                doc.text(topic, leftX, curY);
+                const topicWidth = doc.getTextWidth(topic + " ");
+                doc.setFontSize(9);
+                doc.setTextColor(107, 114, 128);
+                doc.text(`(${date})`, leftX + topicWidth, curY);
+
+                doc.setFontSize(12);
+                doc.setTextColor(79, 70, 229);
+                const scoreWidth = doc.getTextWidth(score);
+                doc.text(score, margin + cardWidth - cardPadding - scoreWidth, curY);
+
+                curY += 6;
+                doc.setFontSize(9);
+                doc.setTextColor(107, 114, 128);
+                doc.text(level, leftX, curY);
+                const percentWidth = doc.getTextWidth(percent);
+                doc.text(percent, margin + cardWidth - cardPadding - percentWidth, curY);
+
+                if (mistakes.length > 0) {
+                    curY += 2;
+                    doc.setDrawColor(229, 231, 235);
+                    doc.line(leftX, curY, margin + cardWidth - cardPadding, curY);
+                    curY += 5;
+
+                    doc.setFontSize(10);
+                    doc.setTextColor(220, 38, 38);
+                    doc.text(prefix, leftX, curY);
+
+                    let x = leftX + prefixWidth;
+                    mistakes.forEach((m, idx) => {
+                        const segments = [
+                            { text: m.selected, color: [220, 38, 38] },
+                            { text: " ", color: [220, 38, 38] },
+                            { text: m.correct, color: [22, 163, 74] },
+                            { text: idx < mistakes.length - 1 ? " | " : "", color: [220, 38, 38] }
+                        ];
+                        segments.forEach(seg => {
+                            if (!seg.text) return;
+                            const width = doc.getTextWidth(seg.text);
+                            if (x + width > maxX) {
+                                curY += lineHeight;
+                                x = leftX;
+                            }
+                            doc.setTextColor(seg.color[0], seg.color[1], seg.color[2]);
+                            doc.text(seg.text, x, curY);
+                            x += width;
+                        });
+                    });
+                }
+
+                y += cardHeight + 6;
             });
 
             doc.save("franz_resultate.pdf");
