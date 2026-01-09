@@ -3,19 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Französisch Vokabel-Trainer 9. Klasse</title>
+    <title>Französisch Trainer Pro (Lvl 1 & 2)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&display=swap');
 
-        body {
-            font-family: 'Nunito', sans-serif;
-            background-color: #f0fdf4;
-        }
-
-        h1, h2, h3, .emoji-display {
-            font-family: 'Fredoka', sans-serif;
-        }
+        body { font-family: 'Nunito', sans-serif; background-color: #f0fdf4; }
+        h1, h2, h3, .emoji-display { font-family: 'Fredoka', sans-serif; }
 
         .emoji-bounce { animation: bounce 2s infinite; }
         @keyframes bounce {
@@ -32,19 +26,8 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Success/Error Animations */
-        .correct-anim {
-            background-color: #86efac !important;
-            border-color: #22c55e !important;
-            color: #064e3b !important;
-        }
-        
-        .wrong-anim {
-            background-color: #fca5a5 !important;
-            border-color: #ef4444 !important;
-            color: #7f1d1d !important;
-            animation: shake 0.5s;
-        }
+        .correct-anim { background-color: #86efac !important; border-color: #22c55e !important; color: #064e3b !important; }
+        .wrong-anim { background-color: #fca5a5 !important; border-color: #ef4444 !important; color: #7f1d1d !important; animation: shake 0.5s; }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -52,25 +35,29 @@
             75% { transform: translateX(5px); }
         }
 
-        /* Category Card Hover */
-        .cat-card:hover { transform: translateY(-3px); }
+        /* Locked State */
+        .locked { opacity: 0.6; cursor: not-allowed; filter: grayscale(100%); position: relative; }
+        .level-badge { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100">
 
-    <div class="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white min-h-[600px] flex flex-col">
+    <div class="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white min-h-[650px] flex flex-col">
         
         <div class="bg-indigo-600 p-4 text-white flex justify-between items-center shadow-md z-10">
             <div class="flex items-center gap-2">
                 <span class="text-2xl">🇫🇷</span>
-                <span class="font-bold text-lg leading-tight">Vocabulaire<br><span class="text-indigo-200 text-xs font-normal">Niveau 9. Klasse</span></span>
+                <span class="font-bold text-lg leading-tight">Pro Trainer<br><span class="text-indigo-200 text-xs font-normal">Wortschatz & Grammatik</span></span>
             </div>
-            <button onclick="goToMenu()" id="home-btn" class="hidden text-xs bg-indigo-700 hover:bg-indigo-800 px-3 py-1 rounded-lg transition">🏠 Menü</button>
+            <div class="flex gap-2">
+                <button onclick="resetProgress()" class="text-xs bg-indigo-800 hover:bg-red-600 px-2 py-1 rounded transition text-indigo-200 hover:text-white" title="Fortschritt löschen">🗑️ Reset</button>
+                <button onclick="goToMenu()" id="home-btn" class="hidden text-xs bg-indigo-700 hover:bg-indigo-800 px-3 py-1 rounded-lg transition">🏠 Menü</button>
+            </div>
         </div>
 
         <div id="menu-screen" class="p-6 fade-in flex-grow flex flex-col">
-            <h2 class="text-2xl text-center font-bold text-gray-700 mb-6">Wähle ein Thema</h2>
-            <div class="grid grid-cols-2 gap-4 overflow-y-auto pb-4" id="category-grid">
+            <h2 class="text-2xl text-center font-bold text-gray-700 mb-6">Wähle deine Challenge</h2>
+            <div class="grid grid-cols-1 gap-4 overflow-y-auto pb-4" id="category-grid">
                 </div>
         </div>
 
@@ -80,9 +67,14 @@
             </div>
 
             <div class="p-6 text-center fade-in flex-grow flex flex-col justify-center">
-                <div class="mb-2 text-indigo-400 text-sm font-bold uppercase tracking-wider" id="topic-label">THEMA</div>
+                <div class="flex justify-between items-center mb-2">
+                     <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider" id="topic-label">THEMA</span>
+                     <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider" id="level-label">LEVEL 1</span>
+                </div>
                 
-                <div class="text-8xl mb-8 mt-4 emoji-display emoji-bounce drop-shadow-md cursor-default select-none" id="emoji-container">🤔</div>
+                <div class="text-8xl mb-4 mt-2 emoji-display emoji-bounce drop-shadow-md cursor-default select-none" id="emoji-container">🤔</div>
+                
+                <div id="word-hint" class="text-2xl font-bold text-gray-600 mb-6 h-8"></div>
 
                 <div class="grid grid-cols-1 gap-3" id="options-container">
                     </div>
@@ -96,7 +88,7 @@
 
         <div id="result-screen" class="hidden p-6 text-center fade-in flex-grow flex flex-col overflow-y-auto">
             <div class="text-6xl mb-2">📊</div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-1">Résultat</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-1">Ergebnis</h2>
             
             <div class="bg-indigo-50 rounded-xl p-4 mb-6 border-2 border-indigo-100 shadow-inner">
                 <div class="flex justify-around items-end">
@@ -111,199 +103,151 @@
                 </div>
             </div>
 
-            <div id="mistakes-container" class="hidden text-left mb-6">
-                <h3 class="text-red-500 font-bold mb-3 border-b pb-1">⚠️ Deine Fehler:</h3>
-                <div class="space-y-2 text-sm" id="mistakes-list">
-                    </div>
-            </div>
-            
-            <div id="perfect-msg" class="hidden text-green-600 font-bold text-lg mb-6">
-                Perfekt! Keine Fehler! 🎉
+            <div id="unlock-msg" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 text-left rounded shadow-sm">
+                <p class="font-bold">🔓 Level 2 Freigeschaltet!</p>
+                <p class="text-sm">Du kannst jetzt die Grammatik-Challenge für dieses Thema spielen.</p>
             </div>
 
+            <div id="mistakes-container" class="hidden text-left mb-6">
+                <h3 class="text-red-500 font-bold mb-3 border-b pb-1">⚠️ Deine Fehler:</h3>
+                <div class="space-y-2 text-sm" id="mistakes-list"></div>
+            </div>
+            
+            <div id="perfect-msg" class="hidden text-green-600 font-bold text-lg mb-6">Perfekt! Keine Fehler! 🎉</div>
+
             <div class="mt-auto space-y-3">
-                <button onclick="restartLevel()" class="w-full bg-white border-2 border-indigo-600 text-indigo-600 font-bold py-3 rounded-xl hover:bg-indigo-50 transition">
-                    Wiederholen 🔄
-                </button>
                 <button onclick="goToMenu()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
-                    Anderes Thema 🏠
+                    Zurück zum Menü 🏠
                 </button>
             </div>
         </div>
-
     </div>
 
     <script>
-        // --- DATA SETS (8 Sets x 10 Questions) ---
+        // --- DATA ---
         const categories = [
-            {
-                id: 'essen',
-                title: 'Essen',
-                icon: '🥐',
-                color: 'bg-orange-100 border-orange-200 text-orange-800',
-                questions: [
-                    { emoji: "🥐", correct: "le croissant", distractors: ["le pain", "la baguette", "le gâteau"] },
-                    { emoji: "🧀", correct: "le fromage", distractors: ["le lait", "le beurre", "le yaourt"] },
-                    { emoji: "🍟", correct: "les frites", distractors: ["les pommes de terre", "les chips", "la viande"] },
-                    { emoji: "🍎", correct: "la pomme", distractors: ["la poire", "l'orange", "la tomate"] },
-                    { emoji: "🍞", correct: "le pain", distractors: ["le riz", "les pâtes", "la farine"] },
-                    { emoji: "🍗", correct: "le poulet", distractors: ["le bœuf", "le poisson", "le porc"] },
-                    { emoji: "🥚", correct: "l'œuf", distractors: ["le sel", "le sucre", "l'huile"] },
-                    { emoji: "🥗", correct: "la salade", distractors: ["la soupe", "les légumes", "le concombre"] },
-                    { emoji: "🍫", correct: "le chocolat", distractors: ["le bonbon", "le biscuit", "le dessert"] },
-                    { emoji: "🍦", correct: "la glace", distractors: ["la crème", "le gâteau", "le glaçon"] }
-                ]
-            },
-            {
-                id: 'trinken',
-                title: 'Getränke',
-                icon: '🥤',
-                color: 'bg-blue-100 border-blue-200 text-blue-800',
-                questions: [
-                    { emoji: "💧", correct: "l'eau", distractors: ["le lait", "le jus", "le vin"] },
-                    { emoji: "☕", correct: "le café", distractors: ["le thé", "le chocolat", "le coca"] },
-                    { emoji: "🥛", correct: "le lait", distractors: ["l'eau", "la crème", "le yaourt"] },
-                    { emoji: "🧃", correct: "le jus", distractors: ["le soda", "le sirop", "la limonade"] },
-                    { emoji: "🍵", correct: "le thé", distractors: ["la tisane", "le café", "la soupe"] },
-                    { emoji: "🍷", correct: "le vin", distractors: ["la bière", "le champagne", "l'alcool"] },
-                    { emoji: "🍺", correct: "la bière", distractors: ["le cidre", "le vin", "l'eau"] },
-                    { emoji: "🥤", correct: "le soda", distractors: ["le jus", "l'eau minérale", "le lait"] },
-                    { emoji: "🍋", correct: "la limonade", distractors: ["le citron", "l'orangeade", "le thé glacé"] },
-                    { emoji: "🍼", correct: "le biberon", distractors: ["la bouteille", "le verre", "la tasse"] }
-                ]
-            },
-            {
-                id: 'kleidung',
-                title: 'Kleidung',
-                icon: '👗',
-                color: 'bg-pink-100 border-pink-200 text-pink-800',
-                questions: [
-                    { emoji: "👖", correct: "le pantalon", distractors: ["le jean", "la jupe", "le short"] },
-                    { emoji: "👗", correct: "la robe", distractors: ["la chemise", "le t-shirt", "le manteau"] },
-                    { emoji: "👕", correct: "le t-shirt", distractors: ["le pull", "la veste", "le top"] },
-                    { emoji: "👟", correct: "les chaussures", distractors: ["les chaussettes", "les bottes", "les pieds"] },
-                    { emoji: "👓", correct: "les lunettes", distractors: ["le chapeau", "la montre", "les yeux"] },
-                    { emoji: "🧥", correct: "le manteau", distractors: ["la veste", "l'imperméable", "le pull"] },
-                    { emoji: "🧢", correct: "la casquette", distractors: ["le chapeau", "le bonnet", "la tête"] },
-                    { emoji: "🧦", correct: "les chaussettes", distractors: ["les chaussures", "les gants", "le collant"] },
-                    { emoji: "👔", correct: "la chemise", distractors: ["la cravate", "le costume", "le gilet"] },
-                    { emoji: "🧣", correct: "l'écharpe", distractors: ["le bonnet", "les gants", "le foulard"] }
-                ]
-            },
-            {
-                id: 'tiere',
-                title: 'Tiere',
-                icon: '🐾',
-                color: 'bg-green-100 border-green-200 text-green-800',
-                questions: [
-                    { emoji: "🐕", correct: "le chien", distractors: ["le chat", "le loup", "le renard"] },
-                    { emoji: "🐈", correct: "le chat", distractors: ["le tigre", "le lion", "la souris"] },
-                    { emoji: "🐎", correct: "le cheval", distractors: ["l'âne", "la vache", "le zèbre"] },
-                    { emoji: "🐦", correct: "l'oiseau", distractors: ["le poulet", "le canard", "l'avion"] },
-                    { emoji: "🐟", correct: "le poisson", distractors: ["la baleine", "le requin", "le dauphin"] },
-                    { emoji: "🐄", correct: "la vache", distractors: ["le cochon", "le mouton", "le taureau"] },
-                    { emoji: "🐖", correct: "le cochon", distractors: ["le sanglier", "la ferme", "le jambon"] },
-                    { emoji: "🦁", correct: "le lion", distractors: ["le tigre", "le chat", "l'ours"] },
-                    { emoji: "🐘", correct: "l'éléphant", distractors: ["la girafe", "l'hippopotame", "le rhinocéros"] },
-                    { emoji: "🐒", correct: "le singe", distractors: ["l'humain", "le gorille", "la banane"] }
-                ]
-            },
-            {
-                id: 'schule',
-                title: 'Schule',
-                icon: '🏫',
-                color: 'bg-yellow-100 border-yellow-200 text-yellow-800',
-                questions: [
-                    { emoji: "🖊️", correct: "le stylo", distractors: ["le crayon", "la gomme", "la règle"] },
-                    { emoji: "📚", correct: "les livres", distractors: ["les cahiers", "la bibliothèque", "les devoirs"] },
-                    { emoji: "🎒", correct: "le sac à dos", distractors: ["la valise", "le sac", "la trousse"] },
-                    { emoji: "💻", correct: "l'ordinateur", distractors: ["la tablette", "le téléphone", "l'écran"] },
-                    { emoji: "✂️", correct: "les ciseaux", distractors: ["la colle", "le papier", "le couteau"] },
-                    { emoji: "📏", correct: "la règle", distractors: ["le stylo", "le crayon", "la mesure"] },
-                    { emoji: "📝", correct: "le devoir", distractors: ["l'examen", "la note", "le texte"] },
-                    { emoji: "🏫", correct: "l'école", distractors: ["la classe", "la cour", "le gymnase"] },
-                    { emoji: "🪑", correct: "la chaise", distractors: ["le bureau", "la table", "le siège"] },
-                    { emoji: "🖍️", correct: "le crayon", distractors: ["le feutre", "le pinceau", "la couleur"] }
-                ]
-            },
-            {
-                id: 'transport',
-                title: 'Verkehr',
-                icon: '🚆',
-                color: 'bg-gray-100 border-gray-200 text-gray-800',
-                questions: [
-                    { emoji: "🚗", correct: "la voiture", distractors: ["le bus", "le camion", "le taxi"] },
-                    { emoji: "🚆", correct: "le train", distractors: ["le métro", "le tram", "la gare"] },
-                    { emoji: "✈️", correct: "l'avion", distractors: ["l'hélicoptère", "l'oiseau", "l'aéroport"] },
-                    { emoji: "🚲", correct: "le vélo", distractors: ["la moto", "le scooter", "la roue"] },
-                    { emoji: "🚌", correct: "le bus", distractors: ["le car", "le camion", "la voiture"] },
-                    { emoji: "🚤", correct: "le bateau", distractors: ["la mer", "le navire", "la plage"] },
-                    { emoji: "🏍️", correct: "la moto", distractors: ["le vélo", "le scooter", "le casque"] },
-                    { emoji: "🚁", correct: "l'hélicoptère", distractors: ["l'avion", "le drone", "le ciel"] },
-                    { emoji: "🚇", correct: "le métro", distractors: ["le train", "le tunnel", "la ville"] },
-                    { emoji: "🚶", correct: "à pied", distractors: ["en voiture", "en bus", "courir"] }
-                ]
-            },
-            {
-                id: 'haus',
-                title: 'Haus',
-                icon: '🏠',
-                color: 'bg-teal-100 border-teal-200 text-teal-800',
-                questions: [
-                    { emoji: "🏠", correct: "la maison", distractors: ["l'appartement", "l'immeuble", "le toit"] },
-                    { emoji: "🛏️", correct: "le lit", distractors: ["la chambre", "le canapé", "le dormir"] },
-                    { emoji: "🛁", correct: "la baignoire", distractors: ["la douche", "le bain", "la salle de bain"] },
-                    { emoji: "🛋️", correct: "le canapé", distractors: ["le fauteuil", "la chaise", "le salon"] },
-                    { emoji: "📺", correct: "la télé", distractors: ["l'écran", "le film", "la radio"] },
-                    { emoji: "🗝️", correct: "la clé", distractors: ["la porte", "la serrure", "le métal"] },
-                    { emoji: "🚪", correct: "la porte", distractors: ["la fenêtre", "le mur", "l'entrée"] },
-                    { emoji: "🍽️", correct: "la table", distractors: ["la cuisine", "le repas", "l'assiette"] },
-                    { emoji: "🌳", correct: "le jardin", distractors: ["la fleur", "l'arbre", "l'herbe"] },
-                    { emoji: "🚽", correct: "les toilettes", distractors: ["le bain", "l'eau", "le papier"] }
-                ]
-            },
-            {
-                id: 'sport',
-                title: 'Sport',
-                icon: '⚽',
-                color: 'bg-red-100 border-red-200 text-red-800',
-                questions: [
-                    { emoji: "⚽", correct: "le foot", distractors: ["le ballon", "le stade", "le sport"] },
-                    { emoji: "🎾", correct: "le tennis", distractors: ["la balle", "la raquette", "le ping-pong"] },
-                    { emoji: "🏀", correct: "le basket", distractors: ["le panier", "le ballon", "le hand"] },
-                    { emoji: "🏊", correct: "la natation", distractors: ["la piscine", "l'eau", "la mer"] },
-                    { emoji: "🎿", correct: "le ski", distractors: ["la neige", "la montagne", "l'hiver"] },
-                    { emoji: "🏃", correct: "courir", distractors: ["marcher", "sauter", "jouer"] },
-                    { emoji: "🚴", correct: "le cyclisme", distractors: ["le vélo", "la course", "la roue"] },
-                    { emoji: "🥊", correct: "la boxe", distractors: ["le combat", "le gant", "frapper"] },
-                    { emoji: "🧘", correct: "le yoga", distractors: ["la gym", "le calme", "le sport"] },
-                    { emoji: "🏆", correct: "le champion", distractors: ["la coupe", "la médaille", "le gagnant"] }
-                ]
-            }
+            { id: 'essen', title: 'Essen', icon: '🥐', color: 'bg-orange-50 border-orange-200', questions: [
+                { emoji: "🥐", correct: "le croissant" }, { emoji: "🧀", correct: "le fromage" },
+                { emoji: "🍟", correct: "les frites" }, { emoji: "🍎", correct: "la pomme" },
+                { emoji: "🍞", correct: "le pain" }, { emoji: "🍗", correct: "le poulet" },
+                { emoji: "🥚", correct: "l'œuf" }, { emoji: "🥗", correct: "la salade" },
+                { emoji: "🍫", correct: "le chocolat" }, { emoji: "🍦", correct: "la glace" }
+            ]},
+            { id: 'trinken', title: 'Getränke', icon: '🥤', color: 'bg-blue-50 border-blue-200', questions: [
+                { emoji: "💧", correct: "l'eau" }, { emoji: "☕", correct: "le café" },
+                { emoji: "🥛", correct: "le lait" }, { emoji: "🧃", correct: "le jus" },
+                { emoji: "🍵", correct: "le thé" }, { emoji: "🍷", correct: "le vin" },
+                { emoji: "🍺", correct: "la bière" }, { emoji: "🥤", correct: "le soda" },
+                { emoji: "🍋", correct: "la limonade" }, { emoji: "🍼", correct: "le biberon" }
+            ]},
+            { id: 'kleidung', title: 'Kleidung', icon: '👗', color: 'bg-pink-50 border-pink-200', questions: [
+                { emoji: "👖", correct: "le pantalon" }, { emoji: "👗", correct: "la robe" },
+                { emoji: "👕", correct: "le t-shirt" }, { emoji: "👟", correct: "les chaussures" },
+                { emoji: "👓", correct: "les lunettes" }, { emoji: "🧥", correct: "le manteau" },
+                { emoji: "🧢", correct: "la casquette" }, { emoji: "🧦", correct: "les chaussettes" },
+                { emoji: "👔", correct: "la chemise" }, { emoji: "🧣", correct: "l'écharpe" }
+            ]},
+            { id: 'tiere', title: 'Tiere', icon: '🐾', color: 'bg-green-50 border-green-200', questions: [
+                { emoji: "🐕", correct: "le chien" }, { emoji: "🐈", correct: "le chat" },
+                { emoji: "🐎", correct: "le cheval" }, { emoji: "🐦", correct: "l'oiseau" },
+                { emoji: "🐟", correct: "le poisson" }, { emoji: "🐄", correct: "la vache" },
+                { emoji: "🐖", correct: "le cochon" }, { emoji: "🦁", correct: "le lion" },
+                { emoji: "🐘", correct: "l'éléphant" }, { emoji: "🐒", correct: "le singe" }
+            ]},
+            { id: 'schule', title: 'Schule', icon: '🏫', color: 'bg-yellow-50 border-yellow-200', questions: [
+                { emoji: "🖊️", correct: "le stylo" }, { emoji: "📚", correct: "les livres" },
+                { emoji: "🎒", correct: "le sac à dos" }, { emoji: "💻", correct: "l'ordinateur" },
+                { emoji: "✂️", correct: "les ciseaux" }, { emoji: "📏", correct: "la règle" },
+                { emoji: "📝", correct: "le devoir" }, { emoji: "🏫", correct: "l'école" },
+                { emoji: "🪑", correct: "la chaise" }, { emoji: "🖍️", correct: "le crayon" }
+            ]},
+            { id: 'transport', title: 'Verkehr', icon: '🚆', color: 'bg-gray-50 border-gray-200', questions: [
+                { emoji: "🚗", correct: "la voiture" }, { emoji: "🚆", correct: "le train" },
+                { emoji: "✈️", correct: "l'avion" }, { emoji: "🚲", correct: "le vélo" },
+                { emoji: "🚌", correct: "le bus" }, { emoji: "🚤", correct: "le bateau" },
+                { emoji: "🏍️", correct: "la moto" }, { emoji: "🚁", correct: "l'hélicoptère" },
+                { emoji: "🚇", correct: "le métro" }, { emoji: "🎟️", correct: "le billet" }
+            ]},
+            { id: 'haus', title: 'Haus', icon: '🏠', color: 'bg-teal-50 border-teal-200', questions: [
+                { emoji: "🏠", correct: "la maison" }, { emoji: "🛏️", correct: "le lit" },
+                { emoji: "🛁", correct: "la baignoire" }, { emoji: "🛋️", correct: "le canapé" },
+                { emoji: "📺", correct: "la télé" }, { emoji: "🗝️", correct: "la clé" },
+                { emoji: "🚪", correct: "la porte" }, { emoji: "🍽️", correct: "la table" },
+                { emoji: "🌳", correct: "le jardin" }, { emoji: "🚽", correct: "les toilettes" }
+            ]},
+            { id: 'sport', title: 'Sport', icon: '⚽', color: 'bg-red-50 border-red-200', questions: [
+                { emoji: "⚽", correct: "le foot" }, { emoji: "🎾", correct: "le tennis" },
+                { emoji: "🏀", correct: "le basket" }, { emoji: "🏊", correct: "la natation" },
+                { emoji: "🎿", correct: "le ski" }, { emoji: "🏅", correct: "la médaille" },
+                { emoji: "🚴", correct: "le cyclisme" }, { emoji: "🥊", correct: "la boxe" },
+                { emoji: "🧘", correct: "le yoga" }, { emoji: "🏆", correct: "le champion" }
+            ]}
         ];
 
+        // Global Distractors for Level 1 (vocabulary mix)
+        const globalVocab = categories.flatMap(c => c.questions.map(q => q.correct));
+
         // --- STATE MANAGEMENT ---
+        let userProgress = JSON.parse(localStorage.getItem('frenchQuizProgress')) || {};
         let currentSet = [];
         let currentIndex = 0;
         let score = 0;
-        let wrongAnswers = []; // Stores objects { emoji, correct, selected }
+        let wrongAnswers = [];
         let isAnswerLocked = false;
-        let currentCategoryId = null;
+        let activeCategoryIndex = null;
+        let activeLevel = 1;
 
-        // --- INIT & MENU ---
+        // --- LOCAL STORAGE HELPERS ---
+        function saveProgress(catId, level) {
+            if (!userProgress[catId]) userProgress[catId] = { l1: false, l2: false };
+            if (level === 1) userProgress[catId].l1 = true;
+            if (level === 2) userProgress[catId].l2 = true;
+            localStorage.setItem('frenchQuizProgress', JSON.stringify(userProgress));
+        }
+
+        function resetProgress() {
+            if(confirm("Alles löschen?")) {
+                localStorage.removeItem('frenchQuizProgress');
+                userProgress = {};
+                initMenu();
+            }
+        }
+
+        // --- MENU GENERATION ---
         function initMenu() {
             const grid = document.getElementById('category-grid');
             grid.innerHTML = '';
             
             categories.forEach((cat, index) => {
-                const btn = document.createElement('div');
-                btn.className = `cat-card cursor-pointer p-4 rounded-xl border-2 shadow-sm flex flex-col items-center justify-center gap-2 transition ${cat.color}`;
-                btn.innerHTML = `
-                    <div class="text-4xl">${cat.icon}</div>
-                    <div class="font-bold text-lg">${cat.title}</div>
+                const status = userProgress[cat.id] || { l1: false, l2: false };
+                const isL2Unlocked = status.l1 === true;
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border shadow-sm flex items-center justify-between ${cat.color}`;
+                
+                let l2ButtonClass = isL2Unlocked 
+                    ? 'bg-yellow-500 hover:bg-yellow-600 text-white shadow-md' 
+                    : 'bg-gray-300 text-gray-500 locked shadow-none';
+                
+                let l2Icon = isL2Unlocked ? '⚡' : '🔒';
+                
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl">${cat.icon}</div>
+                        <div class="font-bold text-gray-800">${cat.title}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="startGame(${index}, 1)" class="flex flex-col items-center justify-center w-16 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md transition transform active:scale-95">
+                            <span class="text-lg">📖</span>
+                            <span class="level-badge">Lvl 1</span>
+                        </button>
+                        <button onclick="${isL2Unlocked ? `startGame(${index}, 2)` : ''}" class="flex flex-col items-center justify-center w-16 h-14 rounded-xl transition transform active:scale-95 ${l2ButtonClass}">
+                            <span class="text-lg">${l2Icon}</span>
+                            <span class="level-badge">Lvl 2</span>
+                        </button>
+                    </div>
                 `;
-                btn.onclick = () => startGame(index);
-                grid.appendChild(btn);
+                grid.appendChild(card);
             });
 
             document.getElementById('menu-screen').classList.remove('hidden');
@@ -312,12 +256,36 @@
             document.getElementById('home-btn').classList.add('hidden');
         }
 
+        // --- HELPER: ANALYZE ANSWER FOR LEVEL 2 ---
+        function splitArticleWord(fullString) {
+            // Basic French articles to split
+            const articles = ['le', 'la', 'l\'', 'les', 'un', 'une', 'des'];
+            let foundArticle = "";
+            let noun = fullString;
+
+            for (let art of articles) {
+                if (fullString.startsWith(art + " ") || fullString.startsWith(art)) {
+                    // Check specifically for l' case which doesn't always have space
+                    if (art === "l'") {
+                        foundArticle = "l'";
+                        noun = fullString.substring(2);
+                    } else {
+                        foundArticle = art;
+                        noun = fullString.substring(art.length).trim();
+                    }
+                    break;
+                }
+            }
+            return { article: foundArticle, noun: noun };
+        }
+
         // --- GAME LOGIC ---
-        function startGame(catIndex) {
-            currentCategoryId = catIndex;
+        function startGame(catIndex, level) {
+            activeCategoryIndex = catIndex;
+            activeLevel = level;
             const category = categories[catIndex];
             
-            // Clone and Shuffle questions
+            // Randomize Questions
             currentSet = shuffleArray([...category.questions]);
             
             currentIndex = 0;
@@ -325,8 +293,9 @@
             wrongAnswers = [];
             isAnswerLocked = false;
 
-            // UI Updates
+            // UI Setup
             document.getElementById('topic-label').innerText = category.title;
+            document.getElementById('level-label').innerText = level === 1 ? "Level 1: Vokabeln" : "Level 2: Artikel";
             document.getElementById('menu-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
@@ -343,37 +312,59 @@
             }
 
             const q = currentSet[currentIndex];
-            const options = shuffleArray([q.correct, ...q.distractors]);
-
-            // Update UI
+            const container = document.getElementById('options-container');
+            const wordHint = document.getElementById('word-hint');
+            container.innerHTML = '';
+            
+            // Update Progress
             document.getElementById('emoji-container').innerText = q.emoji;
             document.getElementById('current-q').innerText = currentIndex + 1;
             document.getElementById('total-q').innerText = currentSet.length;
-            
-            // Progress Bar
-            const progress = (currentIndex / currentSet.length) * 100;
-            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('progress-bar').style.width = `${(currentIndex / currentSet.length) * 100}%`;
 
-            // Buttons
-            const container = document.getElementById('options-container');
-            container.innerHTML = '';
-            
+            let correctVal = "";
+            let options = [];
+
+            if (activeLevel === 1) {
+                // LEVEL 1: Vocabulary (Full Word)
+                wordHint.innerText = ""; // No text hint
+                correctVal = q.correct;
+                // Generate distractors from global pool + category specifics
+                const randomDistractors = shuffleArray(globalVocab.filter(w => w !== q.correct)).slice(0, 3);
+                options = shuffleArray([q.correct, ...randomDistractors]);
+            } else {
+                // LEVEL 2: Grammar (Article Selection)
+                const parts = splitArticleWord(q.correct);
+                correctVal = parts.article;
+                wordHint.innerText = `... ${parts.noun}`; // Show "___ croissant"
+                
+                // Fixed Grammar Options
+                options = ["le", "la", "l'", "les"];
+                // If the answer is un/une/des, we should adapt, but data is mostly le/la.
+                // If answer is not in standard list, add it.
+                if (!options.includes(correctVal)) {
+                    options.pop();
+                    options.push(correctVal);
+                    options = shuffleArray(options);
+                }
+            }
+
             options.forEach(opt => {
                 const btn = document.createElement('button');
-                btn.className = 'btn-option w-full bg-white border-2 border-indigo-100 text-indigo-900 font-semibold py-3 px-4 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 text-lg shadow-sm';
+                btn.className = 'btn-option w-full bg-white border-2 border-indigo-100 text-indigo-900 font-semibold py-4 px-4 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 text-xl shadow-sm';
                 btn.innerText = opt;
-                btn.onclick = () => checkAnswer(btn, opt, q);
+                btn.onclick = () => checkAnswer(btn, opt, correctVal, q);
                 container.appendChild(btn);
             });
 
             isAnswerLocked = false;
         }
 
-        function checkAnswer(btn, selected, questionData) {
+        function checkAnswer(btn, selected, correctVal, questionObj) {
             if (isAnswerLocked) return;
             isAnswerLocked = true;
 
-            const isCorrect = selected === questionData.correct;
+            const isCorrect = selected === correctVal;
             const allBtns = document.querySelectorAll('.btn-option');
 
             if (isCorrect) {
@@ -382,16 +373,17 @@
                 document.getElementById('score-display').innerText = `Punkte: ${score}`;
             } else {
                 btn.classList.add('wrong-anim');
-                // Track mistake
+                
+                // Store Mistake (display full correct answer for context)
                 wrongAnswers.push({
-                    emoji: questionData.emoji,
-                    correct: questionData.correct,
-                    selected: selected
+                    emoji: questionObj.emoji,
+                    correct: questionObj.correct, // Show full word in result
+                    selected: selected // What user clicked
                 });
                 
-                // Show correct answer
+                // Highlight Correct
                 allBtns.forEach(b => {
-                    if (b.innerText === questionData.correct) {
+                    if (b.innerText === correctVal) {
                         b.classList.add('correct-anim');
                     }
                 });
@@ -408,14 +400,28 @@
             document.getElementById('result-screen').classList.remove('hidden');
             document.getElementById('progress-bar').style.width = `100%`;
 
-            // Score Logic
             const total = currentSet.length;
-            const percent = Math.round((score / total) * 100);
-
+            const catId = categories[activeCategoryIndex].id;
+            
             document.getElementById('final-score').innerText = `${score}/${total}`;
-            document.getElementById('final-percent').innerText = `${percent}%`;
+            document.getElementById('final-percent').innerText = `${Math.round((score/total)*100)}%`;
 
-            // Mistakes Handling
+            // UNLOCK LOGIC (Need 70% to unlock Level 2)
+            const passed = score >= 7;
+            const unlockMsg = document.getElementById('unlock-msg');
+            unlockMsg.classList.add('hidden');
+
+            if (activeLevel === 1 && passed) {
+                // If not already unlocked, show message
+                if (!userProgress[catId]?.l1) {
+                    unlockMsg.classList.remove('hidden');
+                }
+                saveProgress(catId, 1);
+            } else if (activeLevel === 2 && passed) {
+                saveProgress(catId, 2);
+            }
+
+            // MISTAKES DISPLAY
             const mistakesContainer = document.getElementById('mistakes-container');
             const mistakesList = document.getElementById('mistakes-list');
             const perfectMsg = document.getElementById('perfect-msg');
@@ -427,14 +433,16 @@
                 
                 wrongAnswers.forEach(item => {
                     const row = document.createElement('div');
-                    row.className = 'flex items-center justify-between bg-white p-2 rounded border border-gray-200';
+                    row.className = 'flex items-center justify-between bg-white p-3 rounded border border-gray-200';
                     row.innerHTML = `
-                        <div class="flex items-center gap-2">
-                            <span class="text-xl">${item.emoji}</span>
-                            <span class="text-red-500 line-through decoration-2">${item.selected}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">${item.emoji}</span>
+                            <div>
+                                <span class="block text-xs text-red-400">Du wähltest: "${item.selected}"</span>
+                            </div>
                         </div>
-                        <div class="text-green-600 font-bold">
-                            ${item.correct} ✅
+                        <div class="text-green-700 font-bold bg-green-50 px-2 py-1 rounded">
+                            ${item.correct}
                         </div>
                     `;
                     mistakesList.appendChild(row);
@@ -445,7 +453,6 @@
             }
         }
 
-        // --- HELPERS ---
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -454,19 +461,12 @@
             return array;
         }
 
-        function restartLevel() {
-            if (currentCategoryId !== null) {
-                startGame(currentCategoryId);
-            }
-        }
-
         function goToMenu() {
             initMenu();
         }
 
-        // --- START ---
+        // Start
         window.onload = initMenu;
-
     </script>
 </body>
 </html>
