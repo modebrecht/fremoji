@@ -28,6 +28,7 @@
         .correct-anim { background-color: #86efac !important; border-color: #22c55e !important; color: #064e3b !important; }
         .wrong-anim { background-color: #fca5a5 !important; border-color: #ef4444 !important; color: #7f1d1d !important; animation: shake 0.5s; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .selected-article { background-color: #e0e7ff !important; border-color: #6366f1 !important; }
 
         .locked { opacity: 0.6; cursor: not-allowed; filter: grayscale(100%); position: relative; }
         .level-badge { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold; }
@@ -208,6 +209,7 @@
         let score = 0;
         let wrongAnswers = [];
         let isAnswerLocked = false;
+        let selectedArticle = null;
         let activeCategoryIndex = null;
         let activeLevel = 1;
 
@@ -263,6 +265,29 @@
             if (correctArticle === "l'") return 'la'; // simplification
             if (correctArticle === 'les') return 'des';
             return 'un';
+        }
+
+        function normalizeWord(word) {
+            return word
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, ' ')
+                .replace(/’/g, "'")
+                .replace(/œ/g, 'oe');
+        }
+
+        function getLevel3Articles(article) {
+            if (article === "les") return ["des"];
+            if (article === "l'") return ["le", "la"];
+            if (article === "le" || article === "la") return [article];
+            return [article];
+        }
+
+        function getLevel3ArticleOptions(article) {
+            if (article === "le" || article === "la" || article === "l'") {
+                return ["le", "la"];
+            }
+            return ["des", "de la", "du"];
         }
 
         function shuffleArray(array) {
@@ -348,7 +373,9 @@
                 
                 let mistakesHTML = '';
                 if (game.mistakes && game.mistakes.length > 0) {
-                    const mistakeTxt = game.mistakes.map(m => m.correct).join(', ');
+                    const mistakeTxt = game.mistakes
+                        .map(m => `<span class="text-red-500">${m.selected}</span> <span class="text-green-600">${m.correct}</span>`)
+                        .join(' | ');
                     mistakesHTML = `<div class="mt-2 text-xs text-red-500 border-t pt-1"><strong>Fehler:</strong> ${mistakeTxt}</div>`;
                 }
 
@@ -442,36 +469,60 @@
                 }
 
             } else if (activeLevel === 3) {
-                // L3: Full phrase, tricky distractors
-                wordHint.innerText = ""; 
-                correctVal = q.correct; // "le croissant"
+                // L3: Pick article + type noun
+                wordHint.innerText = "";
                 const parts = splitArticleWord(q.correct);
-                
-                // Distractor 1: Wrong Article + Right Noun (la croissant)
-                const wrongArt = getWrongGenderArticle(parts.article);
-                const d1 = `${wrongArt} ${parts.noun}`;
+                const correctArticles = getLevel3Articles(parts.article);
+                const correctNoun = parts.noun;
+                const articleOptions = getLevel3ArticleOptions(parts.article);
+                selectedArticle = null;
 
-                // Distractor 2: Right Article + Wrong Noun (le pain)
-                // Find a noun from the same set that has same gender if possible, else random
-                const otherItems = currentSet.filter(x => x.correct !== q.correct);
-                let d2Obj = otherItems[Math.floor(Math.random() * otherItems.length)];
-                let d2 = d2Obj ? d2Obj.correct : "l'autre";
+                const articleGrid = document.createElement('div');
+                articleGrid.className = 'grid grid-cols-2 gap-3';
+                articleOptions.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-option w-full bg-white border-2 border-indigo-100 text-indigo-900 font-semibold py-3 px-2 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 text-lg shadow-sm';
+                    btn.innerText = opt;
+                    btn.onclick = () => {
+                        if (isAnswerLocked) return;
+                        selectedArticle = opt;
+                        Array.from(articleGrid.querySelectorAll('button')).forEach(b => {
+                            b.classList.toggle('selected-article', b.innerText === opt);
+                        });
+                    };
+                    articleGrid.appendChild(btn);
+                });
 
-                // Distractor 3: Wrong Article + Wrong Noun or random
-                let d3Obj = otherItems[Math.floor(Math.random() * otherItems.length)];
-                let d3 = d3Obj ? d3Obj.correct : "l'objet";
-                if(d3 === d2) d3 = "l'inconnu"; // avoid duplicate
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'Nomen eingeben';
+                input.className = 'w-full border-2 border-indigo-100 rounded-xl px-3 py-3 text-lg focus:outline-none focus:border-indigo-400';
 
-                options = shuffleArray([correctVal, d1, d2, d3]);
+                const submit = document.createElement('button');
+                submit.className = 'btn-option w-full bg-indigo-600 text-white font-semibold py-3 px-2 rounded-xl hover:bg-indigo-700 text-lg shadow-sm';
+                submit.innerText = 'Antwort prüfen';
+                submit.onclick = () => checkLevel3Answer(articleGrid, input, correctArticles, correctNoun, q);
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        checkLevel3Answer(articleGrid, input, correctArticles, correctNoun, q);
+                    }
+                });
+
+                container.appendChild(articleGrid);
+                container.appendChild(input);
+                container.appendChild(submit);
             }
 
-            options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-option w-full bg-white border-2 border-indigo-100 text-indigo-900 font-semibold py-3 px-2 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 text-lg shadow-sm';
-                btn.innerText = opt;
-                btn.onclick = () => checkAnswer(btn, opt, correctVal, q);
-                container.appendChild(btn);
-            });
+            if (activeLevel !== 3) {
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-option w-full bg-white border-2 border-indigo-100 text-indigo-900 font-semibold py-3 px-2 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 text-lg shadow-sm';
+                    btn.innerText = opt;
+                    btn.onclick = () => checkAnswer(btn, opt, correctVal, q);
+                    container.appendChild(btn);
+                });
+            }
 
             isAnswerLocked = false;
         }
@@ -505,6 +556,51 @@
                     if (b.innerText === correctVal) {
                         b.classList.add('correct-anim');
                     }
+                });
+            }
+
+            setTimeout(() => {
+                currentIndex++;
+                loadQuestion();
+            }, 1200);
+        }
+
+        function checkLevel3Answer(articleGrid, inputEl, correctArticles, correctNoun, questionObj) {
+            if (isAnswerLocked) return;
+            const typed = normalizeWord(inputEl.value);
+            if (!selectedArticle || !typed) {
+                inputEl.classList.add('wrong-anim');
+                setTimeout(() => inputEl.classList.remove('wrong-anim'), 500);
+                return;
+            }
+
+            isAnswerLocked = true;
+            const articleOk = correctArticles.includes(selectedArticle);
+            const nounOk = typed === normalizeWord(correctNoun);
+            const allArticleBtns = Array.from(articleGrid.querySelectorAll('button'));
+
+            if (articleOk && nounOk) {
+                score++;
+                document.getElementById('score-display').innerText = `Punkte: ${score}`;
+                allArticleBtns.forEach(b => {
+                    if (correctArticles.includes(b.innerText)) b.classList.add('correct-anim');
+                });
+                inputEl.classList.add('correct-anim');
+            } else {
+                allArticleBtns.forEach(b => {
+                    if (correctArticles.includes(b.innerText)) b.classList.add('correct-anim');
+                });
+                if (!articleOk && selectedArticle) {
+                    allArticleBtns.forEach(b => {
+                        if (b.innerText === selectedArticle) b.classList.add('wrong-anim');
+                    });
+                }
+                if (!nounOk) inputEl.classList.add('wrong-anim');
+
+                wrongAnswers.push({
+                    emoji: questionObj.emoji,
+                    correct: `${correctArticles[0]} ${correctNoun}`,
+                    selected: `${selectedArticle} ${inputEl.value.trim()}`
                 });
             }
 
@@ -595,7 +691,9 @@
                 else if (game.percentage >= 70) note = "Gut";
                 else if (game.percentage >= 50) note = "Genügend";
 
-                const mistakesStr = game.mistakes.map(m => `${m.emoji} (${m.correct})`).join(', ');
+                const mistakesStr = game.mistakes
+                    .map(m => `${m.emoji} (${m.selected} ${m.correct})`)
+                    .join(' | ');
 
                 const rowData = [
                     game.date,
