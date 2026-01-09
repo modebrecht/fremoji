@@ -81,19 +81,19 @@
             <div class="w-full bg-gray-200 h-3">
                 <div class="bg-green-500 h-3 transition-all duration-500" style="width: 0%" id="progress-bar"></div>
             </div>
-            <div class="px-6 pt-3 pb-3 text-center fade-in flex-grow flex flex-col justify-center">
+            <div class="px-6 pt-3 pb-3 text-center fade-in flex-grow flex flex-col">
                 <div class="flex justify-between items-center mb-2">
                      <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider" id="topic-level-label">THEMA LVL 1</span>
                      <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider" id="level-label">Frage 1/10</span>
                 </div>
-                
-                <div class="text-[4.727rem] mb-4 mt-2 emoji-display emoji-bounce drop-shadow-md cursor-default select-none" id="emoji-container">🤔</div>
-                
-                <div id="word-hint" class="text-2xl font-bold text-gray-600 mb-6 h-8 flex justify-center items-center"></div>
+                <div class="flex flex-col justify-center flex-1 pt-3">
+                    <div class="text-[4.727rem] mb-4 mt-2 emoji-display emoji-bounce drop-shadow-md cursor-default select-none" id="emoji-container">🤔</div>
+                    
+                    <div id="word-hint" class="text-2xl font-bold text-gray-600 mb-6 h-8 flex justify-center items-center"></div>
 
-                <div class="grid grid-cols-1 gap-3" id="options-container">
-                    </div>
-                
+                    <div class="grid grid-cols-1 gap-3" id="options-container">
+                        </div>
+                </div>
             </div>
         </div>
 
@@ -473,6 +473,7 @@
             if (activeLevel === 1) {
                 // L1: Full word (original mode)
                 wordHint.innerText = "";
+                wordHint.style.display = 'none';
                 correctVal = q.correct;
                 // Get other words from same category or random
                 const others = currentSet.filter(x => x.correct !== q.correct).map(x => x.correct);
@@ -483,7 +484,8 @@
                 // L2: Article only
                 const parts = splitArticleWord(q.correct);
                 correctVal = parts.article;
-                wordHint.innerHTML = `<span class="border-b-2 border-gray-400 w-12 inline-block mx-2"></span> ${parts.noun}`;
+                wordHint.innerHTML = `<span class="border-b-2 border-gray-400 w-12 inline-block mx-2 align-middle translate-y-2"></span> ${parts.noun}`;
+                wordHint.style.display = 'flex';
                 
                 // Articles options
                 options = ["le", "la", "l'", "les"];
@@ -494,6 +496,7 @@
             } else if (activeLevel === 3) {
                 // L3: Pick article + type noun
                 wordHint.innerText = "";
+                wordHint.style.display = 'none';
                 const parts = splitArticleWord(q.correct);
                 const correctArticles = getLevel3Articles(parts.article);
                 const correctNoun = parts.noun;
