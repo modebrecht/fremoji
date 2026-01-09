@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+
+<html lang="de">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Emoji Quiz Französisch 9. Klasse</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&display=swap');
+
+
+
+        body {
+
+            font-family: 'Nunito', sans-serif;
+
+            background-color: #f0fdf4; /* Light green bg */
+
+        }
+
+
+
+        h1, h2, .emoji-display {
+
+            font-family: 'Fredoka', sans-serif;
+
+        }
+
+
+
+        .emoji-bounce {
+
+            animation: bounce 2s infinite;
+
+        }
+
+
+
+        @keyframes bounce {
+
+            0%, 100% { transform: translateY(-5%); }
+
+            50% { transform: translateY(5%); }
+
+        }
+
+
+
+        .btn-option {
+
+            transition: all 0.2s;
+
+        }
+
+
+
+        .btn-option:active {
+
+            transform: scale(0.95);
+
+        }
+
+
+
+        .fade-in {
+
+            animation: fadeIn 0.5s ease-in;
+
+        }
+
+
+
+        @keyframes fadeIn {
+
+            from { opacity: 0; transform: translateY(10px); }
+
+            to { opacity: 1; transform: translateY(0); }
+
+        }
+
+
+
+        /* Success/Error Animations */
+
+        .correct-anim {
+
+            background-color: #86efac !important; /* Green-300 */
+
+            border-color: #22c55e !important;
+
+            color: #064e3b !important;
+
+        }
+
+       
+
+        .wrong-anim {
+
+            background-color: #fca5a5 !important; /* Red-300 */
+
+            border-color: #ef4444 !important;
+
+            color: #7f1d1d !important;
+
+            animation: shake 0.5s;
+
+        }
+
+
+
+        @keyframes shake {
+
+            0% { transform: translateX(0); }
+
+            25% { transform: translateX(-5px); }
+
+            50% { transform: translateX(5px); }
+
+            75% { transform: translateX(-5px); }
+
+            100% { transform: translateX(0); }
+
+        }
+
+    </style>
+
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-100 to-purple-100">
+
+
+
+    <!-- Main Container -->
+
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white">
+
+       
+
+        <!-- Header -->
+
+        <div class="bg-indigo-600 p-4 text-white flex justify-between items-center">
+
+            <span class="font-bold text-lg">🇫🇷 Emoji Quiz</span>
+
+            <span class="bg-indigo-800 px-3 py-1 rounded-full text-sm font-mono" id="score-display">Punkte: 0</span>
+
+        </div>
+
+
+
+        <!-- Progress Bar -->
+
+        <div class="w-full bg-gray-200 h-2">
+
+            <div class="bg-green-500 h-2 transition-all duration-500" style="width: 0%" id="progress-bar"></div>
+
+        </div>
+
+
+
+        <!-- Game Area -->
+
+        <div id="game-screen" class="p-6 text-center fade-in">
+
+            <div class="mb-2 text-gray-500 text-sm font-bold uppercase tracking-wider">Was ist das?</div>
+
+           
+
+            <!-- Emoji Display -->
+
+            <div class="text-8xl mb-8 mt-4 emoji-display emoji-bounce drop-shadow-md cursor-default select-none" id="emoji-container">
+
+                🤔
+
+            </div>
+
+
+
+            <!-- Options Grid -->
+
+            <div class="grid grid-cols-1 gap-3" id="options-container">
+
+                <!-- Buttons will be injected here via JS -->
+
+            </div>
+
+           
+
+            <p class="mt-6 text-gray-400 text-xs">Frage <span id="current-q">1</span> von <span id="total-q">10</span></p>
+
+        </div>
+
+
+
+        <!-- Result Screen (Hidden by default) -->
+
+        <div id="result-screen" class="hidden p-8 text-center fade-in">
+
+            <div class="text-6xl mb-4">🎉</div>
+
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Fini!</h2>
+
+            <p class="text-gray-600 mb-6">Du hast das Quiz beendet.</p>
+
+           
+
+            <div class="bg-indigo-50 rounded-xl p-6 mb-8 border-2 border-indigo-100">
+
+                <div class="text-sm text-gray-500 uppercase font-bold">Dein Ergebnis</div>
+
+                <div class="text-5xl font-bold text-indigo-600 my-2" id="final-score">0</div>
+
+                <div class="text-gray-500" id="final-message">Nicht schlecht!</div>
+
+            </div>
+
+
+
+            <button onclick="restartGame()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:-translate-y-1">
+
+                Noch einmal spielen 🔄
+
+            </button>
+
+        </div>
+
+
+
+    </div>
+
+
+
+    <script>
+
+        // Database of Questions (Level 9. Klasse Sek B)
+
+        const allQuestions = [
+
+            { emoji: "🥐", correct: "le croissant", distractors: ["le pain", "la baguette", "le gâteau"] },
+
+            { emoji: "🚆", correct: "le train", distractors: ["la voiture", "le bus", "l'avion"] },
+
+            { emoji: "🏫", correct: "l'école", distractors: ["la maison", "le cinéma", "la bibliothèque"] },
+
+            { emoji: "🏖️", correct: "la plage", distractors: ["la montagne", "la piscine", "le lac"] },
+
+            { emoji: "🍎", correct: "la pomme", distractors: ["la poire", "l'orange", "la tomate"] },
+
+            { emoji: "🚲", correct: "le vélo", distractors: ["la moto", "le pied", "le bateau"] },
+
+            { emoji: "🎬", correct: "le film", distractors: ["le livre", "la musique", "le journal"] },
+
+            { emoji: "🏥", correct: "l'hôpital", distractors: ["l'hôtel", "le restaurant", "la pharmacie"] },
+
+            { emoji: "⚽", correct: "le foot", distractors: ["le tennis", "le basket", "le sport"] },
+
+            { emoji: "🌦️", correct: "la météo", distractors: ["l'heure", "la date", "le temps"] },
+
+            { emoji: "🧀", correct: "le fromage", distractors: ["le lait", "le beurre", "le yaourt"] },
+
+            { emoji: "🕶️", correct: "les lunettes", distractors: ["le chapeau", "la casquette", "les yeux"] },
+
+            { emoji: "👗", correct: "la robe", distractors: ["le pantalon", "la jupe", "le t-shirt"] },
+
+            { emoji: "💻", correct: "l'ordinateur", distractors: ["le portable", "la télé", "la radio"] },
+
+            { emoji: "🐕", correct: "le chien", distractors: ["le chat", "le cheval", "l'oiseau"] },
+
+            { emoji: "🏊", correct: "nager", distractors: ["courir", "danser", "chanter"] },
+
+            { emoji: "😴", correct: "dormir", distractors: ["manger", "travailler", "parler"] },
+
+            { emoji: "🍟", correct: "les frites", distractors: ["les pommes de terre", "les légumes", "la viande"] },
+
+            { emoji: "🎄", correct: "Noël", distractors: ["Pâques", "l'anniversaire", "la fête"] },
+
+            { emoji: "🏠", correct: "la maison", distractors: ["l'appartement", "la chambre", "le jardin"] }
+
+        ];
+
+
+
+        let currentQuestions = [];
+
+        let currentIndex = 0;
+
+        let score = 0;
+
+        const totalQuestions = 10; // Number of questions per round
+
+        let acceptingAnswers = true;
+
+
+
+        // Shuffle function
+
+        function shuffleArray(array) {
+
+            for (let i = array.length - 1; i > 0; i--) {
+
+                const j = Math.floor(Math.random() * (i + 1));
+
+                [array[i], array[j]] = [array[j], array[i]];
+
+            }
+
+            return array;
+
+        }
+
+
+
+        function initGame() {
+
+            // Pick random 10 questions from the pool
+
+            const shuffledPool = shuffleArray([...allQuestions]);
+
+            currentQuestions = shuffledPool.slice(0, totalQuestions);
+
+            currentIndex = 0;
+
+            score = 0;
+
+            acceptingAnswers = true;
+
+           
+
+            // UI Reset
+
+            document.getElementById('score-display').innerText = `Punkte: 0`;
+
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            document.getElementById('result-screen').classList.add('hidden');
+
+           
+
+            loadQuestion();
+
+        }
+
+
+
+        function loadQuestion() {
+
+            if (currentIndex >= totalQuestions) {
+
+                showResults();
+
+                return;
+
+            }
+
+
+
+            const q = currentQuestions[currentIndex];
+
+            const options = shuffleArray([q.correct, ...q.distractors]);
+
+           
+
+            // Update UI text
+
+            document.getElementById('emoji-container').innerText = q.emoji;
+
+            document.getElementById('current-q').innerText = currentIndex + 1;
+
+            document.getElementById('total-q').innerText = totalQuestions;
+
+           
+
+            // Update Progress Bar
+
+            const progress = (currentIndex / totalQuestions) * 100;
+
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+
+
+
+            // Generate Buttons
+
+            const container = document.getElementById('options-container');
+
+            container.innerHTML = ''; // clear old buttons
+
+
+
+            options.forEach(opt => {
+
+                const btn = document.createElement('button');
+
+                btn.className = 'btn-option w-full bg-white border-2 border-indigo-100 text-indigo-900 font-semibold py-3 px-4 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 text-lg shadow-sm';
+
+                btn.innerText = opt;
+
+                btn.onclick = () => handleAnswer(btn, opt, q.correct);
+
+                container.appendChild(btn);
+
+            });
+
+
+
+            acceptingAnswers = true;
+
+        }
+
+
+
+        function handleAnswer(btn, selected, correct) {
+
+            if (!acceptingAnswers) return;
+
+            acceptingAnswers = false;
+
+
+
+            const allBtns = document.querySelectorAll('.btn-option');
+
+
+
+            if (selected === correct) {
+
+                score++;
+
+                document.getElementById('score-display').innerText = `Punkte: ${score}`;
+
+                btn.classList.add('correct-anim');
+
+            } else {
+
+                btn.classList.add('wrong-anim');
+
+                // Highlight the correct one
+
+                allBtns.forEach(b => {
+
+                    if (b.innerText === correct) {
+
+                        b.classList.add('correct-anim');
+
+                    }
+
+                });
+
+            }
+
+
+
+            // Next question delay
+
+            setTimeout(() => {
+
+                currentIndex++;
+
+                loadQuestion();
+
+            }, 1200);
+
+        }
+
+
+
+        function showResults() {
+
+            document.getElementById('game-screen').classList.add('hidden');
+
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            document.getElementById('progress-bar').style.width = `100%`;
+
+           
+
+            const finalScoreEl = document.getElementById('final-score');
+
+            finalScoreEl.innerText = `${score} / ${totalQuestions}`;
+
+           
+
+            const msgEl = document.getElementById('final-message');
+
+            if (score === totalQuestions) {
+
+                msgEl.innerText = "Incroyable! Perfekt! 🏆";
+
+            } else if (score >= 7) {
+
+                msgEl.innerText = "Très bien! Gut gemacht! 👍";
+
+            } else if (score >= 4) {
+
+                msgEl.innerText = "Pas mal. Weiter üben! 💪";
+
+            } else {
+
+                msgEl.innerText = "Oulala! Probier es noch einmal. 🍀";
+
+            }
+
+        }
+
+
+
+        function restartGame() {
+
+            initGame();
+
+        }
+
+
+
+        // Start on load
+
+        window.onload = initGame;
+
+
+
+    </script>
+
+</body>
+
+</html>
