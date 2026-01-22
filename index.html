@@ -125,7 +125,7 @@
                     </div>
                 </div>
             </div>
-            <div id="hint-usage" class="hidden text-xs text-slate-600 mb-4">Buchstaben anzeigen: 0</div>
+            <div id="hint-usage" class="hidden text-xs text-slate-600 mb-4">Buchstaben anzeigen: 0x</div>
 
             <div id="unlock-msg" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 mb-4 text-left rounded shadow-sm text-sm">
                 <span class="font-bold">🔓 Neues Level freigeschaltet!</span><br>
@@ -419,7 +419,7 @@
                 }
 
                 const hintRow = game.level === 3 && Object.prototype.hasOwnProperty.call(game, 'hintUses')
-                    ? `<div class="text-xs text-slate-500 mt-1">Buchstaben anzeigen: ${Number.isFinite(game.hintUses) ? game.hintUses : 0}</div>`
+                    ? `<div class="text-xs text-slate-500 mt-1">Buchstaben anzeigen: ${Number.isFinite(game.hintUses) ? game.hintUses : 0}x</div>`
                     : '';
 
                 item.innerHTML = `
@@ -790,7 +790,7 @@
             const hintUsageEl = document.getElementById('hint-usage');
 
             if (activeLevel === 3) {
-                hintUsageEl.innerText = `Buchstaben anzeigen: ${hintUses}`;
+                hintUsageEl.innerText = `Buchstaben anzeigen: ${hintUses}x`;
                 hintUsageEl.classList.remove('hidden');
             } else {
                 hintUsageEl.classList.add('hidden');
@@ -849,7 +849,7 @@
                 const percent = sanitizePdfText(`${game.percentage}%`);
                 const hintUses = Number.isFinite(game.hintUses) ? game.hintUses : 0;
                 const hasHint = game.level === 3 && Object.prototype.hasOwnProperty.call(game, 'hintUses');
-                const hintText = hasHint ? sanitizePdfText(`Buchstaben anzeigen: ${hintUses}`) : '';
+                const hintText = hasHint ? sanitizePdfText(`Buchstaben anzeigen: ${hintUses}x`) : '';
                 const mistakes = (game.mistakes || []).map(m => ({
                     selected: sanitizePdfText(m.selected),
                     correct: sanitizePdfText(m.correct)
