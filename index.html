@@ -560,6 +560,26 @@
                 hintBtn.onclick = () => {
                     if (isAnswerLocked) return;
                     const targetLetters = getCleanLetters(correctNoun);
+                    let typedLetters = getCleanLetters(input.value);
+                    if (typedLetters.length > 0) {
+                        let keptInput = '';
+                        let matchIndex = 0;
+                        for (const ch of input.value) {
+                            if (/[A-Za-zÀ-ÖØ-öø-ÿœŒçÇ]/.test(ch)) {
+                                const expected = targetLetters[matchIndex] || '';
+                                if (ch.toLowerCase() === expected.toLowerCase()) {
+                                    keptInput += ch;
+                                    matchIndex += 1;
+                                } else {
+                                    break;
+                                }
+                            } else if (keptInput) {
+                                keptInput += ch;
+                            }
+                        }
+                        input.value = keptInput;
+                        typedLetters = getCleanLetters(input.value);
+                    }
                     const letters = shuffleArray([...targetLetters]);
                     letterBox.innerHTML = '';
                     letters.forEach(letter => {
@@ -573,7 +593,8 @@
                             if (letter === targetLetters[nextIndex]) {
                                 input.value = `${input.value}${letter}`;
                                 input.focus();
-                                letterBtn.remove();
+                                letterBtn.disabled = true;
+                                letterBtn.classList.add('opacity-50', 'cursor-not-allowed');
                             } else {
                                 letterBtn.classList.add('wrong-anim');
                                 setTimeout(() => letterBtn.classList.remove('wrong-anim'), 400);
@@ -581,6 +602,15 @@
                         };
                         letterBox.appendChild(letterBtn);
                     });
+                    for (let i = 0; i < typedLetters.length; i++) {
+                        const expected = targetLetters[i];
+                        const btn = Array.from(letterBox.querySelectorAll('button'))
+                            .find(b => !b.disabled && b.innerText === expected);
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+                    }
                     letterBox.style.display = 'flex';
                     hintUses += 1;
                     hintBtn.disabled = true;
