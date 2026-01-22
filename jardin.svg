@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Jardin">
+  <rect x="2" y="12" width="20" height="9" rx="2" fill="#7CCF7A"/>
+  <rect x="2" y="14" width="20" height="7" rx="2" fill="#66B96A"/>
+  <rect x="4" y="10" width="16" height="5" rx="2" fill="#A7E38F"/>
+  <rect x="3" y="6" width="2" height="8" rx="0.5" fill="#D8B38A"/>
+  <rect x="7" y="6" width="2" height="8" rx="0.5" fill="#D8B38A"/>
+  <rect x="11" y="6" width="2" height="8" rx="0.5" fill="#D8B38A"/>
+  <rect x="15" y="6" width="2" height="8" rx="0.5" fill="#D8B38A"/>
+  <rect x="19" y="6" width="2" height="8" rx="0.5" fill="#D8B38A"/>
+  <rect x="2" y="8" width="20" height="2" rx="1" fill="#E9C79E"/>
+</svg>

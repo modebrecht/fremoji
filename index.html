@@ -29,6 +29,8 @@
         .wrong-anim { background-color: #fca5a5 !important; border-color: #ef4444 !important; color: #7f1d1d !important; animation: shake 0.5s; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .selected-article { background-color: #e0e7ff !important; border-color: #6366f1 !important; }
+        .emoji-icon { width: 4.75rem; height: 4.75rem; display: inline-block; }
+        .mistake-emoji .emoji-icon { width: 1.25rem; height: 1.25rem; vertical-align: -0.2rem; }
 
         .locked { opacity: 0.6; cursor: not-allowed; filter: grayscale(100%); position: relative; }
         .level-badge { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold; }
@@ -192,8 +194,8 @@
                 { emoji: "🏠", correct: "la maison" }, { emoji: "🛏️", correct: "le lit" },
                 { emoji: "🛁", correct: "la baignoire" }, { emoji: "🛋️", correct: "le canapé" },
                 { emoji: "📺", correct: "la télé" }, { emoji: "🗝️", correct: "la clé" },
-                { emoji: "🚪", correct: "la porte" }, { emoji: "🍽️", correct: "la table" },
-                { emoji: "🌳", correct: "le jardin" }, { emoji: "🚽", correct: "les toilettes" }
+                { emoji: "🚪", correct: "la porte" }, { emoji: "<img src=\"table.svg\" alt=\"la table\" class=\"emoji-icon\" onerror=\"this.replaceWith(document.createTextNode('🍽️'))\">", correct: "la table" },
+                { emoji: "<img src=\"jardin.svg\" alt=\"le jardin\" class=\"emoji-icon\" onerror=\"this.replaceWith(document.createTextNode('🌳'))\">", correct: "le jardin" }, { emoji: "🚽", correct: "les toilettes" }
             ]},
             { id: 'sport', title: 'Sport', icon: '⚽', color: 'bg-red-50 border-red-200', questions: [
                 { emoji: "⚽", correct: "le foot" }, { emoji: "🎾", correct: "le tennis" },
@@ -472,7 +474,7 @@
             const wordHint = document.getElementById('word-hint');
             container.innerHTML = '';
             
-            document.getElementById('emoji-container').innerText = q.emoji;
+            document.getElementById('emoji-container').innerHTML = q.emoji;
             document.getElementById('level-label').innerText = `Frage ${currentIndex + 1}/${currentSet.length}`;
             document.getElementById('progress-bar').style.width = `${(currentIndex / currentSet.length) * 100}%`;
 
@@ -702,7 +704,7 @@
                     row.className = 'flex items-center justify-between bg-white p-2 rounded border border-gray-200';
                     row.innerHTML = `
                         <div class="flex items-center gap-2">
-                            <span class="text-xl">${item.emoji}</span>
+                            <span class="text-xl mistake-emoji">${item.emoji}</span>
                             <span class="text-xs text-red-400 line-through">${item.selected}</span>
                         </div>
                         <div class="text-green-700 text-xs font-bold">
