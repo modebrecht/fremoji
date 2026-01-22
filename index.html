@@ -125,7 +125,7 @@
                     </div>
                 </div>
             </div>
-            <div id="hint-usage" class="hidden text-xs text-slate-600 mb-4">Hilfe beansprucht: 0x (Buchstaben anzeigen)</div>
+            <div id="hint-usage" class="hidden text-xs text-slate-600 mb-4">Buchstaben anzeigen: 0</div>
 
             <div id="unlock-msg" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 mb-4 text-left rounded shadow-sm text-sm">
                 <span class="font-bold">🔓 Neues Level freigeschaltet!</span><br>
@@ -220,6 +220,7 @@
         let activeCategoryIndex = null;
         let activeLevel = 1;
         let hintUses = 0;
+        let currentQuestionHadMistake = false;
 
         // --- HELPERS ---
         function saveProgress(catId, level) {
@@ -413,15 +414,20 @@
                 if (game.mistakes && game.mistakes.length > 0) {
                     const mistakeTxt = game.mistakes
                         .map(m => `<span class="text-red-500">${m.selected}</span> <span class="text-green-600">${m.correct}</span>`)
-                        .join(' | ');
+                        .join(' <span class="text-black">|</span> ');
                     mistakesHTML = `<div class="mt-2 text-xs text-red-500 border-t pt-1"><strong>Fehler:</strong> ${mistakeTxt}</div>`;
                 }
+
+                const hintRow = game.level === 3 && Object.prototype.hasOwnProperty.call(game, 'hintUses')
+                    ? `<div class="text-xs text-slate-500 mt-1">Buchstaben anzeigen: ${Number.isFinite(game.hintUses) ? game.hintUses : 0}</div>`
+                    : '';
 
                 item.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>
                             <div class="font-bold text-gray-800">${game.topic} <span class="text-gray-400 font-normal">(${game.date})</span></div>
                             <div class="text-xs text-gray-500 uppercase font-bold mt-1">Level ${game.level}</div>
+                            ${hintRow}
                         </div>
                         <div class="text-right">
                             <div class="text-lg font-bold ${isPerfect ? 'text-green-600' : 'text-indigo-600'}">${game.score}</div>
@@ -474,6 +480,7 @@
             }
 
             const q = currentSet[currentIndex];
+            currentQuestionHadMistake = false;
             const container = document.getElementById('options-container');
             const wordHint = document.getElementById('word-hint');
             container.innerHTML = '';
@@ -701,7 +708,9 @@
             const nounOk = typed === normalizeWord(correctNoun);
 
             if (articleOk && nounOk) {
-                score++;
+                if (!currentQuestionHadMistake) {
+                    score++;
+                }
                 const scoreEl = document.getElementById('score-display');
                 if (scoreEl) scoreEl.innerText = `Punkte: ${score}`;
                 allArticleBtns.forEach(b => {
@@ -728,6 +737,7 @@
                     correct: `${correctArticles[0]} ${correctNoun}`,
                     selected: `${selectedArticle} ${inputEl.value.trim()}`
                 });
+                currentQuestionHadMistake = true;
                 setTimeout(() => {
                     allArticleBtns.forEach(b => b.classList.remove('wrong-anim'));
                     inputEl.classList.remove('wrong-anim');
@@ -780,7 +790,7 @@
             const hintUsageEl = document.getElementById('hint-usage');
 
             if (activeLevel === 3) {
-                hintUsageEl.innerText = `Hilfe beansprucht: ${hintUses}x (Buchstaben anzeigen)`;
+                hintUsageEl.innerText = `Buchstaben anzeigen: ${hintUses}`;
                 hintUsageEl.classList.remove('hidden');
             } else {
                 hintUsageEl.classList.add('hidden');
@@ -838,8 +848,8 @@
                 const score = sanitizePdfText(`${game.score}`);
                 const percent = sanitizePdfText(`${game.percentage}%`);
                 const hintUses = Number.isFinite(game.hintUses) ? game.hintUses : 0;
-                const hasHint = game.level === 3;
-                const hintText = hasHint ? sanitizePdfText(`Hilfe beansprucht: ${hintUses}x (Buchstaben anzeigen)`) : '';
+                const hasHint = game.level === 3 && Object.prototype.hasOwnProperty.call(game, 'hintUses');
+                const hintText = hasHint ? sanitizePdfText(`Buchstaben anzeigen: ${hintUses}`) : '';
                 const mistakes = (game.mistakes || []).map(m => ({
                     selected: sanitizePdfText(m.selected),
                     correct: sanitizePdfText(m.correct)
@@ -930,7 +940,7 @@
                             { text: m.selected, color: [220, 38, 38] },
                             { text: " ", color: [220, 38, 38] },
                             { text: m.correct, color: [22, 163, 74] },
-                            { text: idx < mistakes.length - 1 ? " | " : "", color: [220, 38, 38] }
+                            { text: idx < mistakes.length - 1 ? " | " : "", color: [0, 0, 0] }
                         ];
                         segments.forEach(seg => {
                             if (!seg.text) return;
