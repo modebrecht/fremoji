@@ -487,7 +487,8 @@
             
             document.getElementById('emoji-container').innerHTML = q.emoji;
             document.getElementById('level-label').innerText = `Frage ${currentIndex + 1}/${currentSet.length}`;
-            document.getElementById('progress-bar').style.width = `${(currentIndex / currentSet.length) * 100}%`;
+            const totalQuestions = currentSet.length || 1;
+            document.getElementById('progress-bar').style.width = `${((currentIndex + 1) / totalQuestions) * 100}%`;
 
             let correctVal = "";
             let options = [];
