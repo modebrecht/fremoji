@@ -1,11 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-label="Jardin">
-  <rect x="2" y="12" width="20" height="9" rx="2" fill="#7CCF7A"/>
-  <rect x="2" y="14" width="20" height="7" rx="2" fill="#66B96A"/>
-  <rect x="4" y="10" width="16" height="5" rx="2" fill="#A7E38F"/>
-  <rect x="3" y="6" width="2" height="8" rx="0.5" fill="#D8B38A"/>
-  <rect x="7" y="6" width="2" height="8" rx="0.5" fill="#D8B38A"/>
-  <rect x="11" y="6" width="2" height="8" rx="0.5" fill="#D8B38A"/>
-  <rect x="15" y="6" width="2" height="8" rx="0.5" fill="#D8B38A"/>
-  <rect x="19" y="6" width="2" height="8" rx="0.5" fill="#D8B38A"/>
-  <rect x="2" y="8" width="20" height="2" rx="1" fill="#E9C79E"/>
+  <g transform="translate(0,1.5)">
+    <rect x="2" y="12" width="20" height="9" rx="2" fill="#7CCF7A"/>
+    <rect x="2" y="14" width="20" height="7" rx="2" fill="#66B96A"/>
+    <rect x="4" y="10" width="16" height="5" rx="2" fill="#A7E38F"/>
+    <rect x="16.3" y="4" width="2.6" height="10" rx="1" fill="#8A5A3C"/>
+    <circle cx="17.6" cy="3.6" r="4.1" fill="#5CBF5C"/>
+    <circle cx="15.4" cy="4.8" r="2.8" fill="#6CD16C"/>
+    <circle cx="19.6" cy="5" r="2.7" fill="#6ACB6A"/>
+    <rect x="3.5" y="11.6" width="1.4" height="5.4" rx="0.4" fill="#D8B38A"/>
+    <rect x="7.5" y="11.6" width="1.4" height="5.4" rx="0.4" fill="#D8B38A"/>
+    <rect x="11.5" y="11.6" width="1.4" height="5.4" rx="0.4" fill="#D8B38A"/>
+    <rect x="15.5" y="11.6" width="1.4" height="5.4" rx="0.4" fill="#D8B38A"/>
+    <rect x="19.5" y="11.6" width="1.4" height="5.4" rx="0.4" fill="#D8B38A"/>
+    <rect x="2" y="13.1" width="20" height="1.1" rx="0.55" fill="#E9C79E"/>
+  </g>
 </svg>
