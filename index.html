@@ -125,6 +125,7 @@
                     </div>
                 </div>
             </div>
+            <div id="hint-usage" class="hidden text-xs text-slate-600 mb-4">Hilfe beansprucht: 0x (Buchstaben anzeigen)</div>
 
             <div id="unlock-msg" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 mb-4 text-left rounded shadow-sm text-sm">
                 <span class="font-bold">🔓 Neues Level freigeschaltet!</span><br>
@@ -218,6 +219,7 @@
         let selectedArticle = null;
         let activeCategoryIndex = null;
         let activeLevel = 1;
+        let hintUses = 0;
 
         // --- HELPERS ---
         function saveProgress(catId, level) {
@@ -236,7 +238,8 @@
                 level: activeLevel,
                 score: `${score}/${currentSet.length}`,
                 percentage: Math.round((score/currentSet.length)*100),
-                mistakes: wrongAnswers // Array of {emoji, correct, selected}
+                mistakes: wrongAnswers, // Array of {emoji, correct, selected}
+                hintUses: activeLevel === 3 ? hintUses : 0
             };
             gameHistory.unshift(result); // Add to top
             if (gameHistory.length > 50) gameHistory.pop(); // Limit to 50
@@ -446,6 +449,7 @@
             score = 0;
             wrongAnswers = [];
             isAnswerLocked = false;
+            hintUses = 0;
 
             const lvlNames = { 1: "Wortschatz", 2: "Artikel", 3: "Meister" };
 
@@ -523,10 +527,15 @@
                     btn.innerText = opt;
                     btn.onclick = () => {
                         if (isAnswerLocked) return;
-                        selectedArticle = opt;
-                        Array.from(articleGrid.querySelectorAll('button')).forEach(b => {
-                            b.classList.toggle('selected-article', b.innerText === opt);
-                        });
+                        if (correctArticles.includes(opt)) {
+                            selectedArticle = opt;
+                            Array.from(articleGrid.querySelectorAll('button')).forEach(b => {
+                                b.classList.toggle('selected-article', b.innerText === opt);
+                            });
+                        } else {
+                            btn.classList.add('wrong-anim');
+                            setTimeout(() => btn.classList.remove('wrong-anim'), 400);
+                        }
                     };
                     articleGrid.appendChild(btn);
                 });
@@ -541,6 +550,43 @@
                 submit.innerText = 'Antwort prüfen';
                 submit.onclick = () => checkLevel3Answer(articleGrid, input, correctArticles, correctNoun, q);
 
+                const letterBox = document.createElement('div');
+                letterBox.className = 'flex flex-wrap gap-2 justify-center mt-2';
+                letterBox.style.display = 'none';
+
+                const hintBtn = document.createElement('button');
+                hintBtn.className = 'btn-option w-full bg-white border-2 border-indigo-100 text-indigo-700 font-semibold py-2 px-2 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 text-sm shadow-sm';
+                hintBtn.innerText = 'Buchstaben anzeigen';
+                hintBtn.onclick = () => {
+                    if (isAnswerLocked) return;
+                    const targetLetters = getCleanLetters(correctNoun);
+                    const letters = shuffleArray([...targetLetters]);
+                    letterBox.innerHTML = '';
+                    letters.forEach(letter => {
+                        const letterBtn = document.createElement('button');
+                        letterBtn.type = 'button';
+                        letterBtn.className = 'btn-option bg-white border-2 border-indigo-100 text-indigo-700 font-semibold px-3 py-2 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 text-base shadow-sm';
+                        letterBtn.innerText = letter;
+                        letterBtn.onclick = () => {
+                            const typedLetters = getCleanLetters(input.value);
+                            const nextIndex = typedLetters.length;
+                            if (letter === targetLetters[nextIndex]) {
+                                input.value = `${input.value}${letter}`;
+                                input.focus();
+                                letterBtn.remove();
+                            } else {
+                                letterBtn.classList.add('wrong-anim');
+                                setTimeout(() => letterBtn.classList.remove('wrong-anim'), 400);
+                            }
+                        };
+                        letterBox.appendChild(letterBtn);
+                    });
+                    letterBox.style.display = 'flex';
+                    hintUses += 1;
+                    hintBtn.disabled = true;
+                    hintBtn.classList.add('opacity-60', 'cursor-not-allowed');
+                };
+
                 input.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
                         checkLevel3Answer(articleGrid, input, correctArticles, correctNoun, q);
@@ -550,6 +596,8 @@
                 container.appendChild(articleGrid);
                 container.appendChild(input);
                 container.appendChild(submit);
+                container.appendChild(hintBtn);
+                container.appendChild(letterBox);
             }
 
             if (activeLevel !== 3) {
@@ -657,6 +705,11 @@
             }
         }
 
+        function getCleanLetters(noun) {
+            const cleaned = noun.replace(/[^A-Za-zÀ-ÖØ-öø-ÿœŒçÇ]/g, '');
+            return [...cleaned];
+        }
+
         function endGame() {
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
@@ -693,6 +746,14 @@
             const mistakesContainer = document.getElementById('mistakes-container');
             const mistakesList = document.getElementById('mistakes-list');
             const perfectMsg = document.getElementById('perfect-msg');
+            const hintUsageEl = document.getElementById('hint-usage');
+
+            if (activeLevel === 3) {
+                hintUsageEl.innerText = `Hilfe beansprucht: ${hintUses}x (Buchstaben anzeigen)`;
+                hintUsageEl.classList.remove('hidden');
+            } else {
+                hintUsageEl.classList.add('hidden');
+            }
 
             if (wrongAnswers.length > 0) {
                 perfectMsg.classList.add('hidden');
@@ -745,6 +806,9 @@
                 const level = sanitizePdfText(`LEVEL ${game.level}`);
                 const score = sanitizePdfText(`${game.score}`);
                 const percent = sanitizePdfText(`${game.percentage}%`);
+                const hintUses = Number.isFinite(game.hintUses) ? game.hintUses : 0;
+                const hasHint = game.level === 3;
+                const hintText = hasHint ? sanitizePdfText(`Hilfe beansprucht: ${hintUses}x (Buchstaben anzeigen)`) : '';
                 const mistakes = (game.mistakes || []).map(m => ({
                     selected: sanitizePdfText(m.selected),
                     correct: sanitizePdfText(m.correct)
@@ -775,7 +839,7 @@
                     });
                 });
 
-                const headerHeight = 6 + 6;
+                const headerHeight = 6 + 6 + (hasHint ? 5 : 0);
                 const dividerHeight = mistakes.length > 0 ? 4 : 0;
                 const mistakesHeight = mistakes.length > 0 ? lineHeight * lineCount : 0;
                 const cardHeight = cardPadding * 2 + headerHeight + dividerHeight + mistakesHeight;
@@ -811,6 +875,13 @@
                 doc.text(level, leftX, curY);
                 const percentWidth = doc.getTextWidth(percent);
                 doc.text(percent, margin + cardWidth - cardPadding - percentWidth, curY);
+
+                if (hasHint) {
+                    curY += 5;
+                    doc.setFontSize(9);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(hintText, leftX, curY);
+                }
 
                 if (mistakes.length > 0) {
                     curY += 2;
