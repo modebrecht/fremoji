@@ -319,7 +319,7 @@
         }
 
         function getLevel3Articles(article) {
-            if (article === "les") return ["des"];
+            if (article === "les") return ["les"];
             if (article === "l'") return ["l'"];
             if (article === "le" || article === "la") return [article];
             return [article];
@@ -329,7 +329,7 @@
             if (article === "le" || article === "la" || article === "l'") {
                 return ["le", "la", "l'"];
             }
-            return ["des", "de la", "du"];
+            return ["les", "de la", "du"];
         }
 
         function shuffleArray(array) {
